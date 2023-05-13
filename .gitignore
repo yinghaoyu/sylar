@@ -1,0 +1,6 @@
+*.o
+/bin/*
+!/bin/conf
+/build/*
+/lib/*
+log*.txt

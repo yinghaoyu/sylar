@@ -476,7 +476,7 @@ namespace sylar
     {
       node["level"] = LogLevel::ToString(m_level);
     }
-    if (m_formatter)
+    if (m_hasFormatter && m_formatter)
     {
       node["formatter"] = m_formatter->getPattern();
     }
@@ -764,7 +764,8 @@ namespace sylar
             ld.appenders.push_back(lad);
           }
         }
-        // std::cout << "---" << ld.name << " - " << ld.appenders.size() << std::endl;
+        // std::cout << "---" << ld.name << " - "
+        //           << ld.appenders.size() << std::endl;
         vec.insert(ld);
       }
       return vec;
@@ -860,7 +861,7 @@ namespace sylar
                         ap.reset(new StdoutLogAppender);
                     }
                     ap->setLevel(a.level);
-                                        if(!a.formatter.empty()) {
+                    if(!a.formatter.empty()) {
                         LogFormatter::ptr fmt(new LogFormatter(a.formatter));
                         if(!fmt->isError()) {
                             ap->setFormatter(fmt);

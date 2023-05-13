@@ -137,6 +137,10 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>>& cbs) {
   }
   RWMutexType::WriteLock lock(m_mutex);
 
+  if (m_timers.empty()) {
+    return;
+  }
+
   bool rollover = detectClockRollover(now_ms);
   if (!rollover && ((*m_timers.begin())->m_next > now_ms)) {
     return;

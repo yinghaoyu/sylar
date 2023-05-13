@@ -3,5 +3,5 @@
 !/bin/conf
 /build/*
 /lib/*
-log*.txt
+/tests/*.txt
 /.cache/

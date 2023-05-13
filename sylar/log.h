@@ -10,8 +10,10 @@
 #include <vector>
 #include <stdarg.h>
 #include <map>
+
 #include "util.h"
 #include "singleton.h"
+#include "thread.h"
 
 #define SYLAR_LOG_LEVEL(logger, level)                                                                      \
   if (logger->getLevel() <= level)                                                                          \
@@ -150,13 +152,14 @@ namespace sylar
 
   public:
     typedef std::shared_ptr<LogAppender> ptr;
+    typedef Spinlock MutexType;
     virtual ~LogAppender() {}
 
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
     virtual std::string toYamlString() = 0;
 
     void setFormatter(LogFormatter::ptr val);
-    LogFormatter::ptr getFormatter() const { return m_formatter; }
+    LogFormatter::ptr getFormatter();
 
     LogLevel::Level getLevel() const { return m_level; }
     void setLevel(LogLevel::Level val) { m_level = val; }
@@ -164,6 +167,7 @@ namespace sylar
   protected:
     LogLevel::Level m_level = LogLevel::DEBUG;
     bool m_hasFormatter = false;
+    MutexType m_mutex;
     LogFormatter::ptr m_formatter;
   };
 
@@ -174,6 +178,7 @@ namespace sylar
 
   public:
     typedef std::shared_ptr<Logger> ptr;
+    typedef Spinlock MutexType;
 
     Logger(const std::string &name = "root");
     void log(LogLevel::Level level, LogEvent::ptr event);
@@ -199,8 +204,9 @@ namespace sylar
     std::string toYamlString();
 
   private:
-    std::string m_name;                      // 日志名称
-    LogLevel::Level m_level;                 // 日志级别
+    std::string m_name;      // 日志名称
+    LogLevel::Level m_level; // 日志级别
+    MutexType m_mutex;
     std::list<LogAppender::ptr> m_appenders; // Appender集合
     LogFormatter::ptr m_formatter;
     Logger::ptr m_root;
@@ -230,11 +236,13 @@ namespace sylar
   private:
     std::string m_filename;
     std::ofstream m_filestream;
+    uint64_t m_lastTime = 0;
   };
 
   class LoggerManager
   {
   public:
+    typedef Spinlock MutexType;
     LoggerManager();
     Logger::ptr getLogger(const std::string &name);
 
@@ -244,6 +252,7 @@ namespace sylar
     std::string toYamlString();
 
   private:
+    MutexType m_mutex;
     std::map<std::string, Logger::ptr> m_loggers;
     Logger::ptr m_root;
   };

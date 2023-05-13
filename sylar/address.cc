@@ -1,6 +1,7 @@
 #include "address.h"
 #include <ifaddrs.h>
 #include <netdb.h>
+#include <stddef.h>
 #include <sstream>
 #include "log.h"
 
@@ -65,12 +66,12 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
   std::string node;
   const char* service = NULL;
 
-  // 检查 ipv6address serivce
+  //检查 ipv6address serivce
   if (!host.empty() && host[0] == '[') {
     const char* endipv6 =
         (const char*)memchr(host.c_str() + 1, ']', host.size() - 1);
     if (endipv6) {
-      // TODO check out of range
+      //TODO check out of range
       if (*(endipv6 + 1) == ':') {
         service = endipv6 + 2;
       }
@@ -78,7 +79,7 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
     }
   }
 
-  // 检查 node serivce
+  //检查 node serivce
   if (node.empty()) {
     service = (const char*)memchr(host.c_str(), ':', host.size());
     if (service) {
@@ -103,7 +104,7 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
   next = results;
   while (next) {
     result.push_back(Create(next->ai_addr, (socklen_t)next->ai_addrlen));
-    // SYLAR_LOG_INFO(g_logger) << ((sockaddr_in*)next->ai_addr)->sin_addr.s_addr;
+    //SYLAR_LOG_INFO(g_logger) << ((sockaddr_in*)next->ai_addr)->sin_addr.s_addr;
     next = next->ai_next;
   }
 
@@ -191,7 +192,7 @@ int Address::getFamily() const {
   return getAddr()->sa_family;
 }
 
-std::string Address::toString() {
+std::string Address::toString() const {
   std::stringstream ss;
   insert(ss);
   return ss.str();
@@ -533,6 +534,10 @@ socklen_t UnknownAddress::getAddrLen() const {
 std::ostream& UnknownAddress::insert(std::ostream& os) const {
   os << "[UnknownAddress family=" << m_addr.sa_family << "]";
   return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const Address& addr) {
+  return addr.insert(os);
 }
 
 }  // namespace sylar

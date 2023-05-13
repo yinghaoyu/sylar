@@ -1,6 +1,7 @@
 #include "scheduler.h"
 #include "log.h"
 #include "macro.h"
+#include "hook.h"
 
 namespace sylar
 {
@@ -74,11 +75,10 @@ namespace sylar
     }
     lock.unlock();
 
-    // if (m_rootFiber)
-    // {
-    //   // m_rootFiber->swapIn();
-    //   m_rootFiber->call();
-    //   SYLAR_LOG_INFO(g_logger) << "call out " << m_rootFiber->getState();
+    // if(m_rootFiber) {
+    //     //m_rootFiber->swapIn();
+    //     m_rootFiber->call();
+    //     SYLAR_LOG_INFO(g_logger) << "call out " << m_rootFiber->getState();
     // }
   }
 
@@ -144,7 +144,6 @@ namespace sylar
     {
       i->join();
     }
-
     // if(exit_on_this_fiber) {
     // }
   }
@@ -157,6 +156,7 @@ namespace sylar
   void Scheduler::run()
   {
     SYLAR_LOG_INFO(g_logger) << "run";
+    set_hook_enable(true);
     setThis();
     if (sylar::GetThreadId() != m_rootThread)
     {

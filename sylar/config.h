@@ -344,10 +344,7 @@ namespace sylar
       m_val = v;
     }
 
-    std::string getTypeName() const override
-    {
-      return typeid(T).name();
-    }
+    std::string getTypeName() const override { return typeid(T).name(); }
 
     uint64_t addListener(on_change_cb cb)
     {

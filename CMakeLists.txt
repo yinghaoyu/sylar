@@ -61,6 +61,7 @@ set(LIB_SRC
     sylar/iomanager.cc
     sylar/library.cc
     sylar/log.cc
+    sylar/protocol.cc
     sylar/module.cc
     sylar/mutex.cc
     sylar/scheduler.cc

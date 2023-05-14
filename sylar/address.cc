@@ -66,12 +66,12 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
   std::string node;
   const char* service = NULL;
 
-  //检查 ipv6address serivce
+  // 检查 ipv6address serivce
   if (!host.empty() && host[0] == '[') {
     const char* endipv6 =
         (const char*)memchr(host.c_str() + 1, ']', host.size() - 1);
     if (endipv6) {
-      //TODO check out of range
+      // TODO check out of range
       if (*(endipv6 + 1) == ':') {
         service = endipv6 + 2;
       }
@@ -79,7 +79,7 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
     }
   }
 
-  //检查 node serivce
+  // 检查 node serivce
   if (node.empty()) {
     service = (const char*)memchr(host.c_str(), ':', host.size());
     if (service) {
@@ -95,7 +95,7 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
   }
   int error = getaddrinfo(node.c_str(), service, &hints, &results);
   if (error) {
-    SYLAR_LOG_ERROR(g_logger)
+    SYLAR_LOG_DEBUG(g_logger)
         << "Address::Lookup getaddress(" << host << ", " << family << ", "
         << type << ") err=" << error << " errstr=" << gai_strerror(errno);
     return false;
@@ -104,7 +104,8 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
   next = results;
   while (next) {
     result.push_back(Create(next->ai_addr, (socklen_t)next->ai_addrlen));
-    //SYLAR_LOG_INFO(g_logger) << ((sockaddr_in*)next->ai_addr)->sin_addr.s_addr;
+    // SYLAR_LOG_INFO(g_logger) <<
+    // ((sockaddr_in*)next->ai_addr)->sin_addr.s_addr;
     next = next->ai_next;
   }
 
@@ -117,7 +118,7 @@ bool Address::GetInterfaceAddresses(
     int family) {
   struct ifaddrs *next, *results;
   if (getifaddrs(&results) != 0) {
-    SYLAR_LOG_ERROR(g_logger) << "Address::GetInterfaceAddresses getifaddrs "
+    SYLAR_LOG_DEBUG(g_logger) << "Address::GetInterfaceAddresses getifaddrs "
                                  " err="
                               << errno << " errstr=" << strerror(errno);
     return false;
@@ -249,7 +250,7 @@ IPAddress::ptr IPAddress::Create(const char* address, uint16_t port) {
 
   int error = getaddrinfo(address, NULL, &hints, &results);
   if (error) {
-    SYLAR_LOG_ERROR(g_logger) << "IPAddress::Create(" << address << ", " << port
+    SYLAR_LOG_DEBUG(g_logger) << "IPAddress::Create(" << address << ", " << port
                               << ") error=" << error << " errno=" << errno
                               << " errstr=" << strerror(errno);
     return nullptr;
@@ -274,7 +275,7 @@ IPv4Address::ptr IPv4Address::Create(const char* address, uint16_t port) {
   rt->m_addr.sin_port = byteswapOnLittleEndian(port);
   int result = inet_pton(AF_INET, address, &rt->m_addr.sin_addr);
   if (result <= 0) {
-    SYLAR_LOG_ERROR(g_logger) << "IPv4Address::Create(" << address << ", "
+    SYLAR_LOG_DEBUG(g_logger) << "IPv4Address::Create(" << address << ", "
                               << port << ") rt=" << result << " errno=" << errno
                               << " errstr=" << strerror(errno);
     return nullptr;
@@ -357,7 +358,7 @@ IPv6Address::ptr IPv6Address::Create(const char* address, uint16_t port) {
   rt->m_addr.sin6_port = byteswapOnLittleEndian(port);
   int result = inet_pton(AF_INET6, address, &rt->m_addr.sin6_addr);
   if (result <= 0) {
-    SYLAR_LOG_ERROR(g_logger) << "IPv6Address::Create(" << address << ", "
+    SYLAR_LOG_DEBUG(g_logger) << "IPv6Address::Create(" << address << ", "
                               << port << ") rt=" << result << " errno=" << errno
                               << " errstr=" << strerror(errno);
     return nullptr;

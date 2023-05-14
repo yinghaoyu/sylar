@@ -23,14 +23,14 @@ HttpRequest::ptr WSSession::handleShake() {
       SYLAR_LOG_INFO(g_logger) << "invalid http request";
       break;
     }
-    // if(req->getHeader("Upgrade") != "websocket") {
-    //     SYLAR_LOG_INFO(g_logger) << "http header Upgrade != websocket";
-    //     break;
-    // }
-    // if(req->getHeader("Connection") != "Upgrade") {
-    //     SYLAR_LOG_INFO(g_logger) << "http header Connection != Upgrade";
-    //     break;
-    // }
+    if (strcasecmp(req->getHeader("Upgrade").c_str(), "websocket")) {
+      SYLAR_LOG_INFO(g_logger) << "http header Upgrade != websocket";
+      break;
+    }
+    if (strcasecmp(req->getHeader("Connection").c_str(), "Upgrade")) {
+      SYLAR_LOG_INFO(g_logger) << "http header Connection != Upgrade";
+      break;
+    }
     if (req->getHeaderAs<int>("Sec-webSocket-Version") != 13) {
       SYLAR_LOG_INFO(g_logger) << "http header Sec-webSocket-Version != 13";
       break;

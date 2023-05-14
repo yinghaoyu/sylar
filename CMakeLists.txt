@@ -25,6 +25,7 @@ endif()
 
 set(LIB_SRC
     sylar/address.cc
+    sylar/application.cc
     sylar/bytearray.cc
     sylar/config.cc
     sylar/env.cc
@@ -107,6 +108,7 @@ sylar_add_executable(test_daemon "tests/test_daemon.cc" sylar "${LIBS}")
 sylar_add_executable(test_env "tests/test_env.cc" sylar "${LIBS}")
 sylar_add_executable(test_ws_server "tests/test_ws_server.cc" sylar "${LIBS}")
 sylar_add_executable(test_ws_client "tests/test_ws_client.cc" sylar "${LIBS}")
+sylar_add_executable(test_application "tests/test_application.cc" sylar "${LIBS}")
 
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

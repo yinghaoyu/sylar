@@ -38,8 +38,8 @@ IPAddress::ptr Address::LookupAnyIPAddress(const std::string& host, int family,
                                            int type, int protocol) {
   std::vector<Address::ptr> result;
   if (Lookup(result, host, family, type, protocol)) {
-    // for (auto& i : result) {
-    //   std::cout << i->toString() << std::endl;
+    // for(auto& i : result) {
+    //     std::cout << i->toString() << std::endl;
     // }
     for (auto& i : result) {
       IPAddress::ptr v = std::dynamic_pointer_cast<IPAddress>(i);
@@ -97,7 +97,7 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
   if (error) {
     SYLAR_LOG_DEBUG(g_logger)
         << "Address::Lookup getaddress(" << host << ", " << family << ", "
-        << type << ") err=" << error << " errstr=" << gai_strerror(errno);
+        << type << ") err=" << error << " errstr=" << gai_strerror(error);
     return false;
   }
 
@@ -110,7 +110,7 @@ bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host,
   }
 
   freeaddrinfo(results);
-  return true;
+  return !result.empty();
 }
 
 bool Address::GetInterfaceAddresses(
@@ -160,7 +160,7 @@ bool Address::GetInterfaceAddresses(
     return false;
   }
   freeifaddrs(results);
-  return true;
+  return !result.empty();
 }
 
 bool Address::GetInterfaceAddresses(
@@ -186,7 +186,7 @@ bool Address::GetInterfaceAddresses(
   for (; its.first != its.second; ++its.first) {
     result.push_back(its.first->second);
   }
-  return true;
+  return !result.empty();
 }
 
 int Address::getFamily() const {

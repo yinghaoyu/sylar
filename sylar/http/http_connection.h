@@ -4,7 +4,7 @@
 #include <list>
 
 #include "http.h"
-#include "sylar/socket_stream.h"
+#include "sylar/streams/socket_stream.h"
 #include "sylar/thread.h"
 #include "sylar/uri.h"
 

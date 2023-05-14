@@ -1,8 +1,8 @@
 #ifndef __SYLAR_SOCKET_STREAM_H__
 #define __SYLAR_SOCKET_STREAM_H__
 
-#include "socket.h"
-#include "stream.h"
+#include "sylar/socket.h"
+#include "sylar/stream.h"
 
 namespace sylar {
 

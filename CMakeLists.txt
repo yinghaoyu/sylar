@@ -28,7 +28,12 @@ endif()
 
 find_package(jsoncpp REQUIRED)
 if(JSONCPP_FOUND)
-  include_directories(${jsoncpp_INCLUDE_DIRS})
+  include_directories(${JSONCPP_INCLUDE_DIRS})
+endif()
+
+find_package(ZLIB REQUIRED)
+if(ZLIB_FOUND)
+  include_directories(${ZLIB_INCLUDE_DIRS})
 endif()
 
 set(LIB_SRC
@@ -60,8 +65,9 @@ set(LIB_SRC
     sylar/mutex.cc
     sylar/scheduler.cc
     sylar/socket.cc
-    sylar/socket_stream.cc
     sylar/stream.cc
+    sylar/streams/socket_stream.cc
+    sylar/streams/zlib_stream.cc
     sylar/tcp_server.cc
     sylar/timer.cc
     sylar/thread.cc
@@ -94,7 +100,8 @@ set(LIBS
         pthread
         yaml-cpp
         jsoncpp_lib_static
-        ${OPENSSL_LIBRARIES})
+        ${OPENSSL_LIBRARIES}
+        ${ZLIB_LIBRARIES})
 
 if(${TEST})
     sylar_add_executable(test1 "tests/test.cc" sylar "${LIBS}")
@@ -131,6 +138,8 @@ if(${TEST})
     sylar_add_executable(test_lru "tests/test_lru.cc" sylar "${LIBS}")
     sylar_add_executable(test_timed_cache "tests/test_timed_cache.cc" sylar "${LIBS}")
     sylar_add_executable(test_timed_lru_cache "tests/test_timed_lru_cache.cc" sylar "${LIBS}")
+
+    sylar_add_executable(test_zlib_stream "tests/test_zlib_stream.cc" sylar "${LIBS}")
 endif()
 
 sylar_add_executable(bin_sylar "sylar/main.cc" sylar "${LIBS}")

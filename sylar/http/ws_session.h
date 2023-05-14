@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "sylar/config.h"
 #include "sylar/http/http_session.h"
+#include "sylar/streams/socket_stream.h"
 
 namespace sylar {
 namespace http {

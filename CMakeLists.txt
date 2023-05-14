@@ -13,6 +13,9 @@ include_directories(.)
 include_directories(/apps/sylar/include)
 link_directories(/apps/sylar/lib)
 
+option(TEST "ON for complile test" OFF)
+set(TEST ON)
+
 find_package(Boost REQUIRED)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
@@ -46,7 +49,9 @@ set(LIB_SRC
     #sylar/http/httpclient_parser.rl.cc
     sylar/hook.cc
     sylar/iomanager.cc
+    sylar/library.cc
     sylar/log.cc
+    sylar/module.cc
     sylar/mutex.cc
     sylar/scheduler.cc
     sylar/socket.cc
@@ -83,35 +88,41 @@ set(LIBS
         yaml-cpp
         ${OPENSSL_LIBRARIES})
 
-sylar_add_executable(test1 "tests/test.cc" sylar "${LIBS}")
-sylar_add_executable(test_config "tests/test_config.cc" sylar "${LIBS}")
-sylar_add_executable(test_thread "tests/test_thread.cc" sylar "${LIBS}")
-sylar_add_executable(test_util "tests/test_util.cc" sylar "${LIBS}")
-sylar_add_executable(test_fiber "tests/test_fiber.cc" sylar "${LIBS}")
-sylar_add_executable(test_scheduler "tests/test_scheduler.cc" sylar "${LIBS}")
-sylar_add_executable(test_iomanager "tests/test_iomanager.cc" sylar "${LIBS}")
-sylar_add_executable(test_hook "tests/test_hook.cc" sylar "${LIBS}")
-sylar_add_executable(test_address "tests/test_address.cc" sylar "${LIBS}")
-sylar_add_executable(test_socket "tests/test_socket.cc" sylar "${LIBS}")
-sylar_add_executable(test_bytearray "tests/test_bytearray.cc" sylar "${LIBS}")
-sylar_add_executable(test_http "tests/test_http.cc" sylar "${LIBS}")
-sylar_add_executable(test_http_parser "tests/test_http_parser.cc" sylar "${LIBS}")
-sylar_add_executable(test_tcp_server "tests/test_tcp_server.cc" sylar "${LIBS}")
-sylar_add_executable(echo_server "examples/echo_server.cc" sylar "${LIBS}")
-sylar_add_executable(test_http_server "tests/test_http_server.cc" sylar "${LIBS}")
-sylar_add_executable(test_http_connection "tests/test_http_connection.cc" sylar "${LIBS}")
-sylar_add_executable(test_uri "tests/test_uri.cc" sylar "${LIBS}")
-sylar_add_executable(my_http_server "samples/my_http_server.cc" sylar "${LIBS}")
+if(${TEST})
+    sylar_add_executable(test1 "tests/test.cc" sylar "${LIBS}")
+    sylar_add_executable(test_config "tests/test_config.cc" sylar "${LIBS}")
+    sylar_add_executable(test_thread "tests/test_thread.cc" sylar "${LIBS}")
+    sylar_add_executable(test_util "tests/test_util.cc" sylar "${LIBS}")
+    sylar_add_executable(test_fiber "tests/test_fiber.cc" sylar "${LIBS}")
+    sylar_add_executable(test_scheduler "tests/test_scheduler.cc" sylar "${LIBS}")
+    sylar_add_executable(test_iomanager "tests/test_iomanager.cc" sylar "${LIBS}")
+    sylar_add_executable(test_hook "tests/test_hook.cc" sylar "${LIBS}")
+    sylar_add_executable(test_address "tests/test_address.cc" sylar "${LIBS}")
+    sylar_add_executable(test_socket "tests/test_socket.cc" sylar "${LIBS}")
+    sylar_add_executable(test_bytearray "tests/test_bytearray.cc" sylar "${LIBS}")
+    sylar_add_executable(test_http "tests/test_http.cc" sylar "${LIBS}")
+    sylar_add_executable(test_http_parser "tests/test_http_parser.cc" sylar "${LIBS}")
+    sylar_add_executable(test_tcp_server "tests/test_tcp_server.cc" sylar "${LIBS}")
+    sylar_add_executable(echo_server "examples/echo_server.cc" sylar "${LIBS}")
+    sylar_add_executable(test_http_server "tests/test_http_server.cc" sylar "${LIBS}")
+    sylar_add_executable(test_http_connection "tests/test_http_connection.cc" sylar "${LIBS}")
+    sylar_add_executable(test_uri "tests/test_uri.cc" sylar "${LIBS}")
+    sylar_add_executable(my_http_server "samples/my_http_server.cc" sylar "${LIBS}")
 
-sylar_add_executable(echo_server_udp "examples/echo_server_udp.cc" sylar "${LIBS}")
-sylar_add_executable(echo_udp_client "examples/echo_udp_client.cc" sylar "${LIBS}")
+    sylar_add_executable(echo_server_udp "examples/echo_server_udp.cc" sylar "${LIBS}")
+    sylar_add_executable(echo_udp_client "examples/echo_udp_client.cc" sylar "${LIBS}")
 
-sylar_add_executable(test_daemon "tests/test_daemon.cc" sylar "${LIBS}")
-sylar_add_executable(test_env "tests/test_env.cc" sylar "${LIBS}")
-sylar_add_executable(test_ws_server "tests/test_ws_server.cc" sylar "${LIBS}")
-sylar_add_executable(test_ws_client "tests/test_ws_client.cc" sylar "${LIBS}")
-sylar_add_executable(test_application "tests/test_application.cc" sylar "${LIBS}")
+    sylar_add_executable(test_daemon "tests/test_daemon.cc" sylar "${LIBS}")
+    sylar_add_executable(test_env "tests/test_env.cc" sylar "${LIBS}")
+    sylar_add_executable(test_ws_server "tests/test_ws_server.cc" sylar "${LIBS}")
+    sylar_add_executable(test_ws_client "tests/test_ws_client.cc" sylar "${LIBS}")
+    sylar_add_executable(test_application "tests/test_application.cc" sylar "${LIBS}")
 
+    add_library(test SHARED tests/test_module.cc)
+endif()
+
+sylar_add_executable(bin_sylar "sylar/main.cc" sylar "${LIBS}")
+set_target_properties(bin_sylar PROPERTIES OUTPUT_NAME "sylar")
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)

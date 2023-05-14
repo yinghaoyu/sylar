@@ -74,21 +74,25 @@ class ServletDispatch : public Servlet {
 
  private:
   RWMutexType m_mutex;
-  //uri(/sylar/xxx) -> servlet
+  // uri(/sylar/xxx) -> servlet
   std::unordered_map<std::string, Servlet::ptr> m_datas;
-  //uri(/sylar/*) -> servlet
+  // uri(/sylar/*) -> servlet
   std::vector<std::pair<std::string, Servlet::ptr>> m_globs;
-  //默认servlet，所有路径都没匹配到时使用
+  // 默认servlet，所有路径都没匹配到时使用
   Servlet::ptr m_default;
 };
 
 class NotFoundServlet : public Servlet {
  public:
   typedef std::shared_ptr<NotFoundServlet> ptr;
-  NotFoundServlet();
+  NotFoundServlet(const std::string& name);
   virtual int32_t handle(sylar::http::HttpRequest::ptr request,
                          sylar::http::HttpResponse::ptr response,
                          sylar::http::HttpSession::ptr session) override;
+
+ private:
+  std::string m_name;
+  std::string m_content;
 };
 
 }  // namespace http

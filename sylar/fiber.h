@@ -4,7 +4,6 @@
 #include <ucontext.h>
 #include <functional>
 #include <memory>
-#include "thread.h"
 
 namespace sylar {
 class Scheduler;

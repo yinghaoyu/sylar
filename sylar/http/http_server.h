@@ -18,6 +18,8 @@ class HttpServer : public TcpServer {
   ServletDispatch::ptr getServletDispatch() const { return m_dispatch; }
   void setServletDispatch(ServletDispatch::ptr v) { m_dispatch = v; }
 
+  virtual void setName(const std::string& v) override;
+
  protected:
   virtual void handleClient(Socket::ptr client) override;
 

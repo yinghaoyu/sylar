@@ -20,13 +20,17 @@ class TcpServer : public std::enable_shared_from_this<TcpServer>, Noncopyable {
   virtual bool bind(sylar::Address::ptr addr, bool ssl = false);
   virtual bool bind(const std::vector<Address::ptr>& addrs,
                     std::vector<Address::ptr>& fails, bool ssl = false);
+
+  bool loadCertificates(const std::string& cert_file,
+                        const std::string& key_file);
+
   virtual bool start();
   virtual void stop();
 
   uint64_t getRecvTimeout() const { return m_recvTimeout; }
   std::string getName() const { return m_name; }
   void setRecvTimeout(uint64_t v) { m_recvTimeout = v; }
-  void setName(const std::string& v) { m_name = v; }
+  virtual void setName(const std::string& v) { m_name = v; }
 
   bool isStop() const { return m_isStop; }
 

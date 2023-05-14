@@ -108,9 +108,15 @@ class HttpConnectionPool {
   typedef std::shared_ptr<HttpConnectionPool> ptr;
   typedef Mutex MutexType;
 
+  static HttpConnectionPool::ptr Create(const std::string& uri,
+                                        const std::string& vhost,
+                                        uint32_t max_size,
+                                        uint32_t max_alive_time,
+                                        uint32_t max_request);
+
   HttpConnectionPool(const std::string& host, const std::string& vhost,
-                     uint32_t port, uint32_t max_size, uint32_t max_alive_time,
-                     uint32_t max_request);
+                     uint32_t port, bool is_https, uint32_t max_size,
+                     uint32_t max_alive_time, uint32_t max_request);
 
   HttpConnection::ptr getConnection();
 
@@ -152,6 +158,7 @@ class HttpConnectionPool {
   uint32_t m_maxSize;
   uint32_t m_maxAliveTime;
   uint32_t m_maxRequest;
+  bool m_isHttps;
 
   MutexType m_mutex;
   std::list<HttpConnection*> m_conns;

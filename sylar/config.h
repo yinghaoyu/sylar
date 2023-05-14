@@ -252,7 +252,8 @@ class ConfigVar : public ConfigVarBase {
     } catch (std::exception& e) {
       SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
           << "ConfigVar::toString exception" << e.what()
-          << " convert: " << typeid(m_val).name() << " to string";
+          << " convert: " << typeid(m_val).name() << " to string"
+          << " name=" << m_name;
     }
     return "";
   }
@@ -264,7 +265,8 @@ class ConfigVar : public ConfigVarBase {
     } catch (std::exception& e) {
       SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
           << "ConfigVar::toString exception" << e.what()
-          << " convert: string to " << typeid(m_val).name() << " - " << val;
+          << " convert: string to " << typeid(m_val).name()
+          << " name=" << m_name << " - " << val;
     }
     return false;
   }

@@ -14,7 +14,11 @@ bool Env::init(int argc, char** argv) {
   char link[1024] = {0};
   char path[1024] = {0};
   sprintf(link, "/proc/%d/exe", getpid());
-  readlink(link, path, sizeof(path));
+  if (readlink(link, path, sizeof(path)) < 0) {
+    SYLAR_LOG_ERROR(g_logger)
+        << "readlink fail errno=" << errno << " errstr=" << strerror(errno);
+    return false;
+  }
   // /path/xxx/exe
   m_exe = path;
 

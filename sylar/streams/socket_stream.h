@@ -1,6 +1,8 @@
 #ifndef __SYLAR_SOCKET_STREAM_H__
 #define __SYLAR_SOCKET_STREAM_H__
 
+#include "sylar/iomanager.h"
+#include "sylar/mutex.h"
 #include "sylar/socket.h"
 #include "sylar/stream.h"
 

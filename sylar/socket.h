@@ -80,6 +80,8 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
   virtual bool bind(const Address::ptr addr);
 
   virtual bool connect(const Address::ptr addr, uint64_t timeout_ms = -1);
+  
+  virtual bool reconnect(uint64_t timeout_ms = -1);
 
   virtual bool listen(int backlog = SOMAXCONN);
 

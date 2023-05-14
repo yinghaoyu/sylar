@@ -155,7 +155,7 @@ class Atomic {
 
   template <class T, class S>
   static bool compareAndSwapBool(volatile T& t, S old_val, S new_val) {
-    return _sync_bool_compare_and_swap(&t, (T)old_val, (T)new_val);
+    return __sync_bool_compare_and_swap(&t, (T)old_val, (T)new_val);
   }
 };
 

@@ -104,8 +104,8 @@ void Scheduler::stop() {
     // while(!stopping()) {
     //     if(m_rootFiber->getState() == Fiber::TERM
     //             || m_rootFiber->getState() == Fiber::EXCEPT) {
-    //         m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
-    //         SYLAR_LOG_INFO(g_logger) << " root fiber is term, reset";
+    //         m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0,
+    //         true)); SYLAR_LOG_INFO(g_logger) << " root fiber is term, reset";
     //         t_fiber = m_rootFiber.get();
     //     }
     //     m_rootFiber->call();
@@ -165,11 +165,12 @@ void Scheduler::run() {
         }
 
         ft = *it;
-        m_fibers.erase(it);
+        m_fibers.erase(it++);
         ++m_activeThreadCount;
         is_active = true;
         break;
       }
+      tickle_me |= it != m_fibers.end();
     }
 
     if (tickle_me) {

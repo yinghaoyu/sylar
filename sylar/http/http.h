@@ -132,11 +132,15 @@ enum class HttpStatus {
 };
 
 HttpMethod StringToHttpMethod(const std::string& m);
+
 HttpMethod CharsToHttpMethod(const char* m);
+
 const char* HttpMethodToString(const HttpMethod& m);
+
 const char* HttpStatusToString(const HttpStatus& s);
 
 struct CaseInsensitiveLess {
+
   bool operator()(const std::string& lhs, const std::string& rhs) const;
 };
 
@@ -169,11 +173,17 @@ T getAs(const MapType& m, const std::string& key, const T& def = T()) {
   return def;
 }
 
+class HttpResponse;
+
 class HttpRequest {
  public:
+  /// HTTP请求的智能指针
   typedef std::shared_ptr<HttpRequest> ptr;
+  /// MAP结构
   typedef std::map<std::string, std::string, CaseInsensitiveLess> MapType;
   HttpRequest(uint8_t version = 0x11, bool close = true);
+
+  std::shared_ptr<HttpResponse> createResponse();
 
   HttpMethod getMethod() const { return m_method; }
   uint8_t getVersion() const { return m_version; }
@@ -194,7 +204,12 @@ class HttpRequest {
   bool isClose() const { return m_close; }
   void setClose(bool v) { m_close = v; }
 
+  bool isWebsocket() const { return m_websocket; }
+
+  void setWebsocket(bool v) { m_websocket = v; }
+
   void setHeaders(const MapType& v) { m_headers = v; }
+
   void setParams(const MapType& v) { m_params = v; }
   void setCookies(const MapType& v) { m_cookies = v; }
 
@@ -251,24 +266,35 @@ class HttpRequest {
   std::string toString() const;
 
  private:
- private:
+  /// HTTP方法
   HttpMethod m_method;
+  /// HTTP版本
   uint8_t m_version;
+  /// 是否自动关闭
   bool m_close;
-
+  /// 是否为websocket
+  bool m_websocket;
+  /// 请求路径
   std::string m_path;
+  /// 请求参数
   std::string m_query;
+  /// 请求fragment
   std::string m_fragment;
+  /// 请求消息体
   std::string m_body;
-
+  /// 请求头部MAP
   MapType m_headers;
+  /// 请求参数MAP
   MapType m_params;
+  /// 请求Cookie MAP
   MapType m_cookies;
 };
 
 class HttpResponse {
  public:
+  /// HTTP响应结构智能指针
   typedef std::shared_ptr<HttpResponse> ptr;
+  /// MapType
   typedef std::map<std::string, std::string, CaseInsensitiveLess> MapType;
   HttpResponse(uint8_t version = 0x11, bool close = true);
 
@@ -286,6 +312,9 @@ class HttpResponse {
 
   bool isClose() const { return m_close; }
   void setClose(bool v) { m_close = v; }
+
+  bool isWebsocket() const { return m_websocket; }
+  void setWebsocket(bool v) { m_websocket = v; }
 
   std::string getHeader(const std::string& key,
                         const std::string& def = "") const;
@@ -306,11 +335,19 @@ class HttpResponse {
   std::string toString() const;
 
  private:
+  /// 响应状态
   HttpStatus m_status;
+  /// 版本
   uint8_t m_version;
+  /// 是否自动关闭
   bool m_close;
+  /// 是否为websocket
+  bool m_websocket;
+  /// 响应消息体
   std::string m_body;
+  /// 响应原因
   std::string m_reason;
+  /// 响应头部MAP
   MapType m_headers;
 };
 

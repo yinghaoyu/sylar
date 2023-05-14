@@ -14,6 +14,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "sylar/util/hash_util.h"
+#include "sylar/util/json_util.h"
 
 namespace sylar {
 
@@ -74,6 +75,16 @@ bool CheckGetParamValue(const Map& m, const K& k, V& v) {
   } catch (...) {}
   return false;
 }
+
+class TypeUtil {
+ public:
+  static int8_t ToChar(const std::string& str);
+  static int64_t Atoi(const std::string& str);
+  static double Atof(const std::string& str);
+  static int8_t ToChar(const char* str);
+  static int64_t Atoi(const char* str);
+  static double Atof(const char* str);
+};
 
 }  // namespace sylar
 

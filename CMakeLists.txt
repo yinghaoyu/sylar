@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(sylar)
 
 #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thirdpart/yaml-cpp)
@@ -10,8 +10,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 
 include_directories(.)
-include_directories(/apps/sylar/include)
-link_directories(/apps/sylar/lib)
+#include_directories(/apps/sylar/include)
+#link_directories(/apps/sylar/lib)
 
 option(TEST "ON for complile test" OFF)
 set(TEST ON)
@@ -24,6 +24,11 @@ endif()
 find_package(OpenSSL REQUIRED)
 if(OPENSSL_FOUND)
     include_directories(${OPENSSL_INCLUDE_DIR})
+endif()
+
+find_package(jsoncpp REQUIRED)
+if(JSONCPP_FOUND)
+  include_directories(${jsoncpp_INCLUDE_DIRS})
 endif()
 
 set(LIB_SRC
@@ -61,8 +66,10 @@ set(LIB_SRC
     sylar/timer.cc
     sylar/thread.cc
     sylar/util.cc
+    sylar/util/json_util.cc
     sylar/util/hash_util.cc
     sylar/worker.cc
+    sylar/application.cc
     )
 
 ragelmaker(sylar/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar/http)
@@ -70,7 +77,7 @@ ragelmaker(sylar/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/s
 ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
 
 add_library(sylar SHARED ${LIB_SRC})
-force_redefine_file_macro_for_sources(sylar) #__FILE__
+force_redefine_file_macro_for_sources(sylar)
 #add_library(sylar_static STATIC ${LIB_SRC})
 #SET_TARGET_PROPERTIES (sylar_static PROPERTIES OUTPUT_NAME "sylar")
 
@@ -86,6 +93,7 @@ set(LIBS
         dl
         pthread
         yaml-cpp
+        jsoncpp_lib_static
         ${OPENSSL_LIBRARIES})
 
 if(${TEST})

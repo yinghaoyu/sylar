@@ -5,7 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include (cmake/utils.cmake)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 
 include_directories(.)
 
@@ -191,8 +191,7 @@ if(${TEST})
     add_library(test_module SHARED tests/test_module.cc)
 
     # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/orm_out)
-    # set(OLIBS ${LIBS})
-    # set(OLIBS ${OLIBS} orm_data)
+    # set(OLIBS ${LIBS} orm_data)
     # sylar_add_executable(test_orm "tests/test_orm.cc" orm_data "${OLIBS}")
 endif()
 

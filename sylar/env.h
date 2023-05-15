@@ -31,6 +31,7 @@ class Env {
                      const std::string& default_value = "");
 
   std::string getAbsolutePath(const std::string& path) const;
+  std::string getAbsoluteWorkPath(const std::string& path) const;
 
   std::string getConfigPath();
 

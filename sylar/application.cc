@@ -1,5 +1,6 @@
 #include "application.h"
 
+#include <signal.h>
 #include <unistd.h>
 
 #include "sylar/config.h"
@@ -112,6 +113,7 @@ bool Application::run() {
 }
 
 int Application::main(int argc, char** argv) {
+  signal(SIGPIPE, SIG_IGN);
   SYLAR_LOG_INFO(g_logger) << "main";
   std::string conf_path = sylar::EnvMgr::GetInstance()->getConfigPath();
   sylar::Config::LoadFromConfDir(conf_path, true);

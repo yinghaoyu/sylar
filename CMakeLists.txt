@@ -37,6 +37,15 @@ if(SQLite3_FOUND)
   include_directories(${SQLite3_INCLUDE_DIRS})
 endif()
 
+include_directories(/path/to/tinyxml2/include)
+link_directories(/path/to/tinyxml2/lib)
+
+# find_package(TinyXML2 REQUIRED)
+# if(TinyXML2_FOUND)
+#   include_directories(${TinyXML2_INCLUDE_DIRS})
+# endif()
+
+
 # find_package(Protobuf REQUIRED)
 # if(Protobuf_FOUND)
 #     include_directories(${Protobuf_INCLUDE_DIRS})
@@ -94,6 +103,14 @@ set(LIB_SRC
     sylar/application.cc
     )
 
+set(ORM_SRCS
+    sylar/orm/table.cc
+    sylar/orm/column.cc
+    sylar/orm/index.cc
+    sylar/orm/orm.cc
+    sylar/orm/util.cc
+    )
+
 ragelmaker(sylar/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar/http)
 ragelmaker(sylar/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar/http)
 ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
@@ -116,6 +133,7 @@ set(LIBS
         pthread
         yaml-cpp
         jsoncpp_lib_static
+        tinyxml2
         ${OPENSSL_LIBRARIES}
         #${PROTOBUF_LIBRARIES}
         ${ZLIB_LIBRARIES}
@@ -161,7 +179,14 @@ if(${TEST})
     sylar_add_executable(test_rock "tests/test_rock.cc" sylar "${LIBS}")
     sylar_add_executable(test_email  "tests/test_email.cc" sylar "${LIBS}")
 
+    sylar_add_executable(orm "${ORM_SRCS}" sylar "${LIBS}")
+
     add_library(test_module SHARED tests/test_module.cc)
+
+    #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/orm_out)
+    #set(OLIBS ${LIBS})
+    #set(OLIBS ${OLIBS} orm_data)
+    #sylar_add_executable(test_orm "tests/test_orm.cc" orm_data "${OLIBS}")
 endif()
 
 sylar_add_executable(bin_sylar "sylar/main.cc" sylar "${LIBS}")

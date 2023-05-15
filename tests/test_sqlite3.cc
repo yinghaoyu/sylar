@@ -25,13 +25,13 @@ void test_batch(sylar::SQLite3::ptr db) {
                            << "s batch insert n=" << n;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   const std::string dbname = "test.db";
   auto db = sylar::SQLite3::Create(dbname, sylar::SQLite3::READWRITE);
   if (!db) {
     SYLAR_LOG_INFO(g_logger) << "dbname=" << dbname << " not exists";
-    db = sylar::SQLite3::Create(dbname, sylar::SQLite3::READWRITE |
-                                            sylar::SQLite3::CREATE);
+    db = sylar::SQLite3::Create(
+        dbname, sylar::SQLite3::READWRITE | sylar::SQLite3::CREATE);
     if (!db) {
       SYLAR_LOG_INFO(g_logger) << "dbname=" << dbname << " create error";
       return 0;
@@ -96,8 +96,21 @@ int main(int argc, char **argv) {
   }
 
   do {
-    SYLAR_LOG_INFO(g_logger) << "query ";
+    // SYLAR_LOG_INFO(g_logger) << "query ";
   } while (ds->next());
+
+  // const char v[] = "hello ' world";
+  const std::string v = "hello ' world";
+  db->execStmt("insert into user(name) values (?)", v);
+
+  auto dd = std::dynamic_pointer_cast<sylar::SQLite3Data>(
+      db->queryStmt("select * from user"));
+  do {
+    SYLAR_LOG_INFO(g_logger)
+        << "ds.data_count=" << dd->getDataCount()
+        << " ds.column_count=" << dd->getColumnCount() << " 0=" << dd->getInt(0)
+        << " 1=" << dd->getText(1);
+  } while (dd->next());
 
   test_batch(db);
   return 0;

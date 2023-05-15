@@ -655,6 +655,9 @@ class LexicalCast<std::string, LogDefine> {
           }
         } else if (type == "StdoutLogAppender") {
           lad.type = 2;
+          if (a["formatter"].IsDefined()) {
+            lad.formatter = a["formatter"].as<std::string>();
+          }
         } else {
           std::cout << "log config error: appender type is invalid, " << a
                     << std::endl;

@@ -46,6 +46,32 @@ class FunctionServlet : public Servlet {
   callback m_cb;
 };
 
+class IServletCreator {
+ public:
+  typedef std::shared_ptr<IServletCreator> ptr;
+  virtual ~IServletCreator() {}
+  virtual Servlet::ptr get() const = 0;
+};
+
+class HoldServletCreator : public IServletCreator {
+ public:
+  typedef std::shared_ptr<HoldServletCreator> ptr;
+  HoldServletCreator(Servlet::ptr slt) : m_servlet(slt) {}
+
+  Servlet::ptr get() const override { return m_servlet; }
+
+ private:
+  Servlet::ptr m_servlet;
+};
+
+template <class T>
+class ServletCreator : public IServletCreator {
+ public:
+  typedef std::shared_ptr<ServletCreator> ptr;
+  ServletCreator() {}
+  Servlet::ptr get() const override { return Servlet::ptr(new T); }
+};
+
 class ServletDispatch : public Servlet {
  public:
   typedef std::shared_ptr<ServletDispatch> ptr;
@@ -61,6 +87,20 @@ class ServletDispatch : public Servlet {
   void addGlobServlet(const std::string& uri, Servlet::ptr slt);
   void addGlobServlet(const std::string& uri, FunctionServlet::callback cb);
 
+  void addServletCreator(const std::string& uri, IServletCreator::ptr creator);
+  void addGlobServletCreator(const std::string& uri,
+                             IServletCreator::ptr creator);
+
+  template <class T>
+  void addServletCreator(const std::string& uri) {
+    addServletCreator(uri, std::make_shared<ServletCreator<T>>());
+  }
+
+  template <class T>
+  void addGlobServletCreator(const std::string& uri) {
+    addGlobServletCreator(uri, std::make_shared<ServletCreator<T>>());
+  }
+
   void delServlet(const std::string& uri);
   void delGlobServlet(const std::string& uri);
 
@@ -75,9 +115,9 @@ class ServletDispatch : public Servlet {
  private:
   RWMutexType m_mutex;
   // uri(/sylar/xxx) -> servlet
-  std::unordered_map<std::string, Servlet::ptr> m_datas;
+  std::unordered_map<std::string, IServletCreator::ptr> m_datas;
   // uri(/sylar/*) -> servlet
-  std::vector<std::pair<std::string, Servlet::ptr>> m_globs;
+  std::vector<std::pair<std::string, IServletCreator::ptr>> m_globs;
   // 默认servlet，所有路径都没匹配到时使用
   Servlet::ptr m_default;
 };

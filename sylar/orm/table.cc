@@ -433,8 +433,8 @@ void Table::gen_dao_inc(std::ofstream& ofs) {
   auto vs = getPKs();
   ofs << "    static int Delete(";
   for (auto& i : vs) {
-    ofs << "" << i->getDTypeString() << " " << GetAsVariable(i->getName())
-        << ", ";
+    ofs << "const " << i->getDTypeString() << "& "
+        << GetAsVariable(i->getName()) << ", ";
   }
   ofs << m_dbclass << "::ptr conn);" << std::endl;
 
@@ -449,8 +449,8 @@ void Table::gen_dao_inc(std::ofstream& ofs) {
       ofs << GetAsClassName(tmp) << "(";
       for (auto& c : i->getCols()) {
         auto d = getCol(c);
-        ofs << "" << d->getDTypeString() << " " << GetAsVariable(d->getName())
-            << ", ";
+        ofs << " const " << d->getDTypeString() << "& "
+            << GetAsVariable(d->getName()) << ", ";
       }
       ofs << m_dbclass << "::ptr conn);" << std::endl;
     }
@@ -460,8 +460,8 @@ void Table::gen_dao_inc(std::ofstream& ofs) {
       << "::ptr>& results, " << m_dbclass << "::ptr conn);" << std::endl;
   ofs << "    static " << GetAsClassName(class_name) << "::ptr Query(";
   for (auto& i : vs) {
-    ofs << "" << i->getDTypeString() << " " << GetAsVariable(i->getName())
-        << ", ";
+    ofs << " const " << i->getDTypeString() << "& "
+        << GetAsVariable(i->getName()) << ", ";
   }
   ofs << m_dbclass << "::ptr conn);" << std::endl;
 
@@ -475,8 +475,8 @@ void Table::gen_dao_inc(std::ofstream& ofs) {
       ofs << GetAsClassName(tmp) << "(";
       for (auto& c : i->getCols()) {
         auto d = getCol(c);
-        ofs << "" << d->getDTypeString() << " " << GetAsVariable(d->getName())
-            << ", ";
+        ofs << " const " << d->getDTypeString() << "& "
+            << GetAsVariable(d->getName()) << ", ";
       }
       ofs << m_dbclass << "::ptr conn);" << std::endl;
     } else if (i->getDType() == Index::TYPE_INDEX) {
@@ -490,8 +490,8 @@ void Table::gen_dao_inc(std::ofstream& ofs) {
           << "::ptr>& results, ";
       for (auto& c : i->getCols()) {
         auto d = getCol(c);
-        ofs << "" << d->getDTypeString() << " " << GetAsVariable(d->getName())
-            << ", ";
+        ofs << " const " << d->getDTypeString() << "& "
+            << GetAsVariable(d->getName()) << ", ";
       }
       ofs << m_dbclass << "::ptr conn);" << std::endl;
     }
@@ -710,8 +710,8 @@ void Table::gen_dao_src(std::ofstream& ofs) {
       ofs << GetAsClassName(tmp) << "(";
       for (auto& c : i->getCols()) {
         auto d = getCol(c);
-        ofs << "" << d->getDTypeString() << " " << GetAsVariable(d->getName())
-            << ", ";
+        ofs << " const " << d->getDTypeString() << "& "
+            << GetAsVariable(d->getName()) << ", ";
       }
       ofs << m_dbclass << "::ptr conn) {" << std::endl;
       ofs << "    std::string sql = \"delete from " << m_name << " where";
@@ -772,8 +772,8 @@ void Table::gen_dao_src(std::ofstream& ofs) {
   ofs << GetAsClassName(class_name) << "::ptr "
       << GetAsClassName(class_name_dao) << "::Query(";
   for (auto& i : pks) {
-    ofs << "" << i->getDTypeString() << " " << GetAsVariable(i->getName())
-        << ", ";
+    ofs << " const " << i->getDTypeString() << "& "
+        << GetAsVariable(i->getName()) << ", ";
   }
   ofs << m_dbclass << "::ptr conn) {" << std::endl;
 
@@ -828,8 +828,8 @@ void Table::gen_dao_src(std::ofstream& ofs) {
       ofs << GetAsClassName(tmp) << "(";
       for (auto& c : i->getCols()) {
         auto d = getCol(c);
-        ofs << "" << d->getDTypeString() << " " << GetAsVariable(d->getName())
-            << ", ";
+        ofs << " const " << d->getDTypeString() << "& "
+            << GetAsVariable(d->getName()) << ", ";
       }
       ofs << m_dbclass << "::ptr conn) {" << std::endl;
 
@@ -883,8 +883,8 @@ void Table::gen_dao_src(std::ofstream& ofs) {
           << "::ptr>& results, ";
       for (auto& c : i->getCols()) {
         auto d = getCol(c);
-        ofs << "" << d->getDTypeString() << " " << GetAsVariable(d->getName())
-            << ", ";
+        ofs << " const " << d->getDTypeString() << "& "
+            << GetAsVariable(d->getName()) << ", ";
       }
       ofs << m_dbclass << "::ptr conn) {" << std::endl;
 

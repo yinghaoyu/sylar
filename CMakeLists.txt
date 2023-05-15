@@ -190,10 +190,10 @@ if(${TEST})
 
     add_library(test_module SHARED tests/test_module.cc)
 
-    #add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/orm_out)
-    #set(OLIBS ${LIBS})
-    #set(OLIBS ${OLIBS} orm_data)
-    #sylar_add_executable(test_orm "tests/test_orm.cc" orm_data "${OLIBS}")
+    # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/orm_out)
+    # set(OLIBS ${LIBS})
+    # set(OLIBS ${OLIBS} orm_data)
+    # sylar_add_executable(test_orm "tests/test_orm.cc" orm_data "${OLIBS}")
 endif()
 
 sylar_add_executable(bin_sylar "sylar/main.cc" sylar "${LIBS}")

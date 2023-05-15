@@ -19,7 +19,7 @@ struct TcpServerConf {
   int timeout = 1000 * 2 * 60;
   int ssl = 0;
   std::string id;
-  /// 服务器类型，http, ws
+  /// 服务器类型，http, ws, rock
   std::string type = "http";
   std::string name;
   std::string cert_file;
@@ -97,8 +97,8 @@ class LexicalCast<TcpServerConf, std::string> {
 class TcpServer : public std::enable_shared_from_this<TcpServer>, Noncopyable {
  public:
   typedef std::shared_ptr<TcpServer> ptr;
-  TcpServer(sylar::IOManager* woker = sylar::IOManager::GetThis(),
-            sylar::IOManager* accept_woker = sylar::IOManager::GetThis());
+  TcpServer(sylar::IOManager* worker = sylar::IOManager::GetThis(),
+            sylar::IOManager* accept_worker = sylar::IOManager::GetThis());
   virtual ~TcpServer();
 
   virtual bool bind(sylar::Address::ptr addr, bool ssl = false);

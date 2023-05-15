@@ -6,3 +6,6 @@
 /tests/*.txt
 /.cache/
 *.rl.cc
+*.dat
+/.clangd/
+compile_commands.json

@@ -1,17 +1,22 @@
+SOURCE_DIR=$(PWD)
+BUILD_DIR=$(SOURCE_DIR)/build
+
 .PHONY: xx
 
 xx:
-	if [ -d "build" ]; then \
-		cd build && make; \
+	if [ -d $(BUILD_DIR) ]; then \
+		cd $(BUILD_DIR) && make; \
 	else \
-		mkdir build; \
-		cd build && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..; \
+		mkdir -p $(BUILD_DIR); \
+		ln -sf $(BUILD_DIR)/compile_commands.json; \
+		cd $(BUILD_DIR) && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(SOURCE_DIR); \
 	fi
 
 %:
-	if [ -d "build" ]; then \
-		cd build && make $@; \
+	if [ -d $(BUILD_DIR) ]; then \
+		cd $(BUILD_DIR) && make $@; \
 	else \
-		mkdir build; \
-		cd build && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..; \
+		mkdir -p $(BUILD_DIR); \
+		ln -sf $(BUILD_DIR)/compile_commands.json; \
+		cd $(BUILD_DIR) && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(SOURCE_DIR); \
 	fi

@@ -2,12 +2,15 @@
 #include "config.h"
 #include "env.h"
 #include "library.h"
+#include "log.h"
 #include "util.h"
 
 namespace sylar {
 
 static sylar::ConfigVar<std::string>::ptr g_module_path =
     Config::Lookup("module.path", std::string("module"), "module path");
+
+static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 Module::Module(const std::string& name, const std::string& version,
                const std::string& filename, uint32_t type)
@@ -20,6 +23,21 @@ Module::Module(const std::string& name, const std::string& version,
 void Module::onBeforeArgsParse(int argc, char** argv) {}
 
 void Module::onAfterArgsParse(int argc, char** argv) {}
+
+bool Module::handleRequest(sylar::Message::ptr req, sylar::Message::ptr rsp,
+                           sylar::Stream::ptr stream) {
+  SYLAR_LOG_DEBUG(g_logger)
+      << "handleRequest req=" << req->toString() << " rsp=" << rsp->toString()
+      << " stream=" << stream;
+  return true;
+}
+
+bool Module::handleNotify(sylar::Message::ptr notify,
+                          sylar::Stream::ptr stream) {
+  SYLAR_LOG_DEBUG(g_logger)
+      << "handleNotify nty=" << notify->toString() << " stream=" << stream;
+  return true;
+}
 
 bool Module::onLoad() {
   return true;
@@ -52,6 +70,21 @@ std::string Module::statusString() {
 RockModule::RockModule(const std::string& name, const std::string& version,
                        const std::string& filename)
     : Module(name, version, filename, ROCK) {}
+
+bool RockModule::handleRequest(sylar::Message::ptr req, sylar::Message::ptr rsp,
+                               sylar::Stream::ptr stream) {
+  auto rock_req = std::dynamic_pointer_cast<sylar::RockRequest>(req);
+  auto rock_rsp = std::dynamic_pointer_cast<sylar::RockResponse>(rsp);
+  auto rock_stream = std::dynamic_pointer_cast<sylar::RockStream>(stream);
+  return handleRockRequest(rock_req, rock_rsp, rock_stream);
+}
+
+bool RockModule::handleNotify(sylar::Message::ptr notify,
+                              sylar::Stream::ptr stream) {
+  auto rock_nty = std::dynamic_pointer_cast<sylar::RockNotify>(notify);
+  auto rock_stream = std::dynamic_pointer_cast<sylar::RockStream>(stream);
+  return handleRockNotify(rock_nty, rock_stream);
+}
 
 ModuleManager::ModuleManager() {}
 

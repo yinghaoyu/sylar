@@ -79,6 +79,7 @@ set(LIB_SRC
     sylar/stream.cc
     sylar/streams/async_socket_stream.cc
     sylar/streams/socket_stream.cc
+    sylar/streams/load_balance.cc
     sylar/streams/zlib_stream.cc
     sylar/tcp_server.cc
     sylar/timer.cc
@@ -148,8 +149,6 @@ if(${TEST})
     sylar_add_executable(test_ws_client "tests/test_ws_client.cc" sylar "${LIBS}")
     sylar_add_executable(test_application "tests/test_application.cc" sylar "${LIBS}")
 
-    add_library(test SHARED tests/test_module.cc)
-
     sylar_add_executable(test_lru "tests/test_lru.cc" sylar "${LIBS}")
     sylar_add_executable(test_timed_cache "tests/test_timed_cache.cc" sylar "${LIBS}")
     sylar_add_executable(test_timed_lru_cache "tests/test_timed_lru_cache.cc" sylar "${LIBS}")
@@ -157,6 +156,9 @@ if(${TEST})
     sylar_add_executable(test_zlib_stream "tests/test_zlib_stream.cc" sylar "${LIBS}")
     sylar_add_executable(test_crypto "tests/test_crypto.cc" sylar "${LIBS}")
     sylar_add_executable(test_sqlite3 "tests/test_sqlite3.cc" sylar "${LIBS}")
+    sylar_add_executable(test_rock "tests/test_rock.cc" sylar "${LIBS}")
+
+    add_library(test_module SHARED tests/test_module.cc)
 endif()
 
 sylar_add_executable(bin_sylar "sylar/main.cc" sylar "${LIBS}")

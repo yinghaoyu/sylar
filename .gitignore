@@ -7,5 +7,6 @@
 /.cache/
 *.rl.cc
 *.dat
+*.db
 /.clangd/
 compile_commands.json

@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(sylar)
 
-#add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thirdpart/yaml-cpp)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include (cmake/utils.cmake)
 
@@ -10,8 +8,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 
 include_directories(.)
-#include_directories(/apps/sylar/include)
-#link_directories(/apps/sylar/lib)
 
 option(TEST "ON for complile test" OFF)
 set(TEST ON)
@@ -36,6 +32,11 @@ if(ZLIB_FOUND)
   include_directories(${ZLIB_INCLUDE_DIRS})
 endif()
 
+find_package(SQLite3 REQUIRED)
+if(SQLite3_FOUND)
+  include_directories(${SQLite3_INCLUDE_DIRS})
+endif()
+
 # find_package(Protobuf REQUIRED)
 # if(Protobuf_FOUND)
 #     include_directories(${Protobuf_INCLUDE_DIRS})
@@ -46,6 +47,7 @@ set(LIB_SRC
     sylar/application.cc
     sylar/bytearray.cc
     sylar/config.cc
+    sylar/db/sqlite3.cc
     sylar/env.cc
     sylar/daemon.cc
     sylar/fd_manager.cc
@@ -113,7 +115,8 @@ set(LIBS
         jsoncpp_lib_static
         ${OPENSSL_LIBRARIES}
         #${PROTOBUF_LIBRARIES}
-        ${ZLIB_LIBRARIES})
+        ${ZLIB_LIBRARIES}
+        ${SQLite3_LIBRARIES})
 
 if(${TEST})
     sylar_add_executable(test1 "tests/test.cc" sylar "${LIBS}")
@@ -153,6 +156,7 @@ if(${TEST})
 
     sylar_add_executable(test_zlib_stream "tests/test_zlib_stream.cc" sylar "${LIBS}")
     sylar_add_executable(test_crypto "tests/test_crypto.cc" sylar "${LIBS}")
+    sylar_add_executable(test_sqlite3 "tests/test_sqlite3.cc" sylar "${LIBS}")
 endif()
 
 sylar_add_executable(bin_sylar "sylar/main.cc" sylar "${LIBS}")

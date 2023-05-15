@@ -45,6 +45,11 @@ link_directories(/path/to/tinyxml2/lib)
 #   include_directories(${TinyXML2_INCLUDE_DIRS})
 # endif()
 
+find_package(MySQL REQUIRED)
+if(MYSQL_FOUND)
+    include_directories(${MYSQL_INCLUDE_DIR})
+endif()
+
 
 # find_package(Protobuf REQUIRED)
 # if(Protobuf_FOUND)
@@ -56,6 +61,7 @@ set(LIB_SRC
     sylar/application.cc
     sylar/bytearray.cc
     sylar/config.cc
+    sylar/db/mysql.cc
     sylar/db/sqlite3.cc
     sylar/email/email.cc
     sylar/email/smtp.cc
@@ -134,6 +140,7 @@ set(LIBS
         yaml-cpp
         jsoncpp_lib_static
         tinyxml2
+        mysqlclient
         ${OPENSSL_LIBRARIES}
         #${PROTOBUF_LIBRARIES}
         ${ZLIB_LIBRARIES}

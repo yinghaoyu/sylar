@@ -280,7 +280,7 @@ class HttpRequest {
   bool m_websocket;
 
   uint8_t m_parserParamFlag;
-  
+
   /// 请求路径
   std::string m_path;
   /// 请求参数
@@ -341,6 +341,11 @@ class HttpResponse {
   std::ostream& dump(std::ostream& os) const;
   std::string toString() const;
 
+  void setRedirect(const std::string& uri);
+  void setCookie(const std::string& key, const std::string& val,
+                 time_t expired = 0, const std::string& domain = "",
+                 const std::string& path = "", bool secure = false);
+
  private:
   /// 响应状态
   HttpStatus m_status;
@@ -356,6 +361,8 @@ class HttpResponse {
   std::string m_reason;
   /// 响应头部MAP
   MapType m_headers;
+
+  std::vector<std::string> m_cookies;
 };
 
 std::ostream& operator<<(std::ostream& os, const HttpRequest& req);

@@ -942,7 +942,10 @@ std::shared_ptr<MySQL> MySQLTransaction::getMySQL() {
 }
 
 MySQLTransaction::MySQLTransaction(MySQL::ptr mysql, bool auto_commit)
-    : m_mysql(mysql), m_autoCommit(auto_commit) {}
+    : m_mysql(mysql),
+      m_autoCommit(auto_commit),
+      m_isFinished(false),
+      m_hasError(false) {}
 
 MySQLManager::MySQLManager() : m_maxConn(10) {
   mysql_library_init(0, nullptr, nullptr);

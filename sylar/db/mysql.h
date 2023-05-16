@@ -8,6 +8,7 @@
 #include <vector>
 #include "db.h"
 #include "sylar/mutex.h"
+#include "sylar/singleton.h"
 
 namespace sylar {
 
@@ -42,8 +43,8 @@ class MySQLRes : public ISQLData {
 
   MYSQL_RES* get() const { return m_data.get(); }
 
-  int getErrno() const { return m_errno; }
-  const std::string& getErrStr() const { return m_errstr; }
+  int getErrno() const override { return m_errno; }
+  const std::string& getErrStr() const override { return m_errstr; }
 
   bool foreach (data_cb cb);
 
@@ -85,8 +86,8 @@ class MySQLStmtRes : public ISQLData {
   static MySQLStmtRes::ptr Create(std::shared_ptr<MySQLStmt> stmt);
   ~MySQLStmtRes();
 
-  int getErrno() const { return m_errno; }
-  const std::string& getErrStr() const { return m_errstr; }
+  int getErrno() const override { return m_errno; }
+  const std::string& getErrStr() const override { return m_errstr; }
 
   int getDataCount() override;
   int getColumnCount() override;
@@ -317,6 +318,8 @@ class MySQLManager {
   std::map<std::string, std::list<MySQL*>> m_conns;
   std::map<std::string, std::map<std::string, std::string>> m_dbDefines;
 };
+
+typedef sylar::Singleton<MySQLManager> MySQLMgr;
 
 namespace {
 

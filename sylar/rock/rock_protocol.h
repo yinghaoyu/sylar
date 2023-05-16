@@ -29,7 +29,7 @@ class RockBody {
   }
 
   template <class T>
-  bool setAsPB(const T& v) const {
+  bool setAsPB(const T& v) {
     try {
       return v.SerializeToString(&m_body);
     } catch (...) {}

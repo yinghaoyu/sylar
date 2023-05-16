@@ -13,6 +13,7 @@ class HttpServer : public TcpServer {
   typedef std::shared_ptr<HttpServer> ptr;
   HttpServer(bool keepalive = false,
              sylar::IOManager* worker = sylar::IOManager::GetThis(),
+             sylar::IOManager* io_worker = sylar::IOManager::GetThis(),
              sylar::IOManager* accept_worker = sylar::IOManager::GetThis());
 
   ServletDispatch::ptr getServletDispatch() const { return m_dispatch; }

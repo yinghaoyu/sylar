@@ -9,8 +9,8 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c++11 -Wall -
 
 include_directories(.)
 
-option(TEST "ON for complile test" OFF)
-set(TEST ON)
+option(BUILD_TEST "ON for complile test" OFF)
+set(BUILD_TEST ON)
 
 find_package(Boost REQUIRED)
 if(Boost_FOUND)
@@ -51,10 +51,10 @@ if(MYSQL_FOUND)
 endif()
 
 
-# find_package(Protobuf REQUIRED)
-# if(Protobuf_FOUND)
-#     include_directories(${Protobuf_INCLUDE_DIRS})
-# endif()
+find_package(Protobuf REQUIRED)
+if(Protobuf_FOUND)
+    include_directories(${Protobuf_INCLUDE_DIRS})
+endif()
 
 set(LIB_SRC
     sylar/address.cc
@@ -90,6 +90,9 @@ set(LIB_SRC
     sylar/log.cc
     sylar/module.cc
     sylar/mutex.cc
+    sylar/ns/name_server_module.cc
+    sylar/ns/ns_client.cc
+    sylar/ns/ns_protocol.cc
     sylar/protocol.cc
     sylar/rock/rock_protocol.cc
     sylar/rock/rock_server.cc
@@ -124,6 +127,8 @@ ragelmaker(sylar/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar
 ragelmaker(sylar/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar/http)
 ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
 
+protobufmaker(sylar/ns/ns_protobuf.proto LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_library(sylar SHARED ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar)
 #add_library(sylar_static STATIC ${LIB_SRC})
@@ -145,11 +150,11 @@ set(LIBS
         tinyxml2
         mysqlclient
         ${OPENSSL_LIBRARIES}
-        #${PROTOBUF_LIBRARIES}
+        ${PROTOBUF_LIBRARIES}
         ${ZLIB_LIBRARIES}
         ${SQLite3_LIBRARIES})
 
-if(${TEST})
+if(${BUILD_TEST})
     sylar_add_executable(test1 "tests/test.cc" sylar "${LIBS}")
     sylar_add_executable(test_config "tests/test_config.cc" sylar "${LIBS}")
     sylar_add_executable(test_thread "tests/test_thread.cc" sylar "${LIBS}")
@@ -189,6 +194,7 @@ if(${TEST})
     sylar_add_executable(test_rock "tests/test_rock.cc" sylar "${LIBS}")
     sylar_add_executable(test_email  "tests/test_email.cc" sylar "${LIBS}")
     sylar_add_executable(test_mysql "tests/test_mysql.cc" sylar "${LIBS}")
+    sylar_add_executable(test_nameserver "tests/test_nameserver.cc" sylar "${LIBS}")
 
     sylar_add_executable(orm "${ORM_SRCS}" sylar "${LIBS}")
 

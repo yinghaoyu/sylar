@@ -16,6 +16,7 @@
 
 #include "log.h"
 #include "thread.h"
+#include "util.h"
 
 namespace sylar {
 
@@ -252,7 +253,7 @@ class ConfigVar : public ConfigVarBase {
     } catch (std::exception& e) {
       SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
           << "ConfigVar::toString exception " << e.what()
-          << " convert: " << typeid(m_val).name() << " to string"
+          << " convert: " << TypeToName<T>() << " to string"
           << " name=" << m_name;
     }
     return "";
@@ -264,7 +265,7 @@ class ConfigVar : public ConfigVarBase {
     } catch (std::exception& e) {
       SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
           << "ConfigVar::fromString exception" << e.what()
-          << " convert: string to " << typeid(m_val).name()
+          << " convert: string to " << TypeToName<T>()
           << " name=" << m_name << " - " << val;
     }
     return false;
@@ -289,7 +290,7 @@ class ConfigVar : public ConfigVarBase {
     m_val = v;
   }
 
-  std::string getTypeName() const override { return typeid(T).name(); }
+  std::string getTypeName() const override { return TypeToName<T>(); }
 
   uint64_t addListener(on_change_cb cb) {
     static uint64_t s_fun_id = 0;
@@ -341,7 +342,7 @@ class Config {
       } else {
         SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
             << "Lookup name=" << name << " exists but type not "
-            << typeid(T).name() << " real_type=" << it->second->getTypeName()
+            << TypeToName<T>() << " real_type=" << it->second->getTypeName()
             << " " << it->second->toString();
         return nullptr;
       }

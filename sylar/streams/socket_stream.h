@@ -23,6 +23,11 @@ class SocketStream : public Stream {
   Socket::ptr getSocket() const { return m_socket; }
   bool isConnected() const;
 
+  Address::ptr getRemoteAddress();
+  Address::ptr getLocalAddress();
+  std::string getRemoteAddressString();
+  std::string getLocalAddressString();
+
  protected:
   Socket::ptr m_socket;
   bool m_owner;

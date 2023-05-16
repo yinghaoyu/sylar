@@ -16,6 +16,7 @@
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
+#include <google/protobuf/message.h>
 
 #include "sylar/util/crypto_util.h"
 #include "sylar/util/hash_util.h"
@@ -212,6 +213,8 @@ const char* TypeToName() {
       abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
   return s_name;
 }
+
+std::string PBToJsonString(const google::protobuf::Message& message);
 
 }  // namespace sylar
 

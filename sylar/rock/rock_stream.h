@@ -1,6 +1,7 @@
 #ifndef __SYLAR_ROCK_ROCK_STREAM_H__
 #define __SYLAR_ROCK_ROCK_STREAM_H__
 
+#include <boost/any.hpp>
 #include "rock_protocol.h"
 #include "sylar/streams/async_socket_stream.h"
 #include "sylar/streams/load_balance.h"
@@ -36,6 +37,19 @@ class RockStream : public sylar::AsyncSocketStream {
   void setRequestHandler(request_handler v) { m_requestHandler = v; }
   void setNotifyHandler(notify_handler v) { m_notifyHandler = v; }
 
+  template <class T>
+  void setData(const T& v) {
+    m_data = v;
+  }
+
+  template <class T>
+  T getData() {
+    try {
+      return boost::any_cast<T>(m_data);
+    } catch (...) {}
+    return T();
+  }
+
  protected:
   struct RockSendCtx : public SendCtx {
     typedef std::shared_ptr<RockSendCtx> ptr;
@@ -61,6 +75,7 @@ class RockStream : public sylar::AsyncSocketStream {
   RockMessageDecoder::ptr m_decoder;
   request_handler m_requestHandler;
   notify_handler m_notifyHandler;
+  boost::any m_data;
 };
 
 class RockSession : public RockStream {

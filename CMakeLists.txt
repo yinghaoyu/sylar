@@ -114,6 +114,7 @@ set(LIB_SRC
     sylar/util/hash_util.cc
     sylar/worker.cc
     sylar/application.cc
+    sylar/zk_client.cc
     )
 
 set(ORM_SRCS
@@ -150,6 +151,7 @@ set(LIBS
         jsoncpp_lib_static
         tinyxml2
         mysqlclient
+        zookeeper_mt
         ${OPENSSL_LIBRARIES}
         ${PROTOBUF_LIBRARIES}
         ${ZLIB_LIBRARIES}
@@ -197,6 +199,7 @@ if(${BUILD_TEST})
     sylar_add_executable(test_mysql "tests/test_mysql.cc" sylar "${LIBS}")
     sylar_add_executable(test_nameserver "tests/test_nameserver.cc" sylar "${LIBS}")
     sylar_add_executable(test_bitmap "tests/test_bitmap.cc" sylar "${LIBS}")
+    sylar_add_executable(test_zkclient "tests/test_zookeeper.cc" sylar "${LIBS}")
 
     sylar_add_executable(orm "${ORM_SRCS}" sylar "${LIBS}")
 

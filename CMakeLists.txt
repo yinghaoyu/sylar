@@ -63,6 +63,7 @@ set(LIB_SRC
     sylar/config.cc
     sylar/db/mysql.cc
     sylar/db/sqlite3.cc
+    sylar/ds/bitmap.cc
     sylar/email/email.cc
     sylar/email/smtp.cc
     sylar/env.cc
@@ -195,6 +196,7 @@ if(${BUILD_TEST})
     sylar_add_executable(test_email  "tests/test_email.cc" sylar "${LIBS}")
     sylar_add_executable(test_mysql "tests/test_mysql.cc" sylar "${LIBS}")
     sylar_add_executable(test_nameserver "tests/test_nameserver.cc" sylar "${LIBS}")
+    sylar_add_executable(test_bitmap "tests/test_bitmap.cc" sylar "${LIBS}")
 
     sylar_add_executable(orm "${ORM_SRCS}" sylar "${LIBS}")
 

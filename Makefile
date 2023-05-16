@@ -3,9 +3,9 @@ BUILD_DIR=$(SOURCE_DIR)/build
 
 .PHONY: xx
 
-xx:
+"":
 	if [ -d $(BUILD_DIR) ]; then \
-		cd $(BUILD_DIR) && make; \
+		cd $(BUILD_DIR) && make -j4; \
 	else \
 		mkdir -p $(BUILD_DIR); \
 		ln -sf $(BUILD_DIR)/compile_commands.json; \

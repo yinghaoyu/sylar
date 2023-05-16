@@ -64,7 +64,10 @@ bool Module::onServerUp() {
 }
 
 std::string Module::statusString() {
-  return "";
+  std::stringstream ss;
+  ss << "Module name=" << getName() << " version=" << getVersion()
+     << " filename=" << getFilename() << std::endl;
+  return ss.str();
 }
 
 RockModule::RockModule(const std::string& name, const std::string& version,

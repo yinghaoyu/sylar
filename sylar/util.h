@@ -1,13 +1,17 @@
 #ifndef __SYLAR_UTIL_H__
 #define __SYLAR_UTIL_H__
 
+#include <cxxabi.h>
+#include <jsoncpp/json/json.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <yaml-cpp/yaml.h>
 #include <iomanip>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -195,6 +199,19 @@ class StringUtil {
   static std::string WStringToString(const std::wstring& ws);
   static std::wstring StringToWString(const std::string& s);
 };
+
+std::string GetHostName();
+std::string GetIPv4();
+
+bool YamlToJson(const YAML::Node& ynode, Json::Value& jnode);
+bool JsonToYaml(const Json::Value& jnode, YAML::Node& ynode);
+
+template <class T>
+const char* TypeToName() {
+  static const char* s_name =
+      abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
+  return s_name;
+}
 
 }  // namespace sylar
 

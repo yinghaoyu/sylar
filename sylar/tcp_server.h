@@ -2,6 +2,8 @@
 #define __SYLAR_TCP_SERVER_H__
 
 #include <functional>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <memory>
 #include "address.h"
 #include "config.h"
@@ -121,6 +123,8 @@ class TcpServer : public std::enable_shared_from_this<TcpServer>, Noncopyable {
   TcpServerConf::ptr getConf() const { return m_conf; }
   void setConf(TcpServerConf::ptr v) { m_conf = v; }
   void setConf(const TcpServerConf& v);
+
+  virtual std::string toString(const std::string& prefix = "");
 
  protected:
   virtual void handleClient(Socket::ptr client);

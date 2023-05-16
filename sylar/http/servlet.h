@@ -9,6 +9,7 @@
 #include "http.h"
 #include "http_session.h"
 #include "sylar/thread.h"
+#include "sylar/util.h"
 
 namespace sylar {
 namespace http {
@@ -51,6 +52,7 @@ class IServletCreator {
   typedef std::shared_ptr<IServletCreator> ptr;
   virtual ~IServletCreator() {}
   virtual Servlet::ptr get() const = 0;
+  virtual std::string getName() const = 0;
 };
 
 class HoldServletCreator : public IServletCreator {
@@ -60,6 +62,8 @@ class HoldServletCreator : public IServletCreator {
 
   Servlet::ptr get() const override { return m_servlet; }
 
+  std::string getName() const override { return m_servlet->getName(); }
+
  private:
   Servlet::ptr m_servlet;
 };
@@ -68,8 +72,12 @@ template <class T>
 class ServletCreator : public IServletCreator {
  public:
   typedef std::shared_ptr<ServletCreator> ptr;
+
   ServletCreator() {}
+
   Servlet::ptr get() const override { return Servlet::ptr(new T); }
+
+  std::string getName() const override { return TypeToName<T>(); }
 };
 
 class ServletDispatch : public Servlet {
@@ -112,10 +120,18 @@ class ServletDispatch : public Servlet {
 
   Servlet::ptr getMatchedServlet(const std::string& uri);
 
+  void listAllServletCreator(
+      std::map<std::string, IServletCreator::ptr>& infos);
+  void listAllGlobServletCreator(
+      std::map<std::string, IServletCreator::ptr>& infos);
+
  private:
+  // 读写互斥量
   RWMutexType m_mutex;
+  // 精确匹配 servlet Map
   // uri(/sylar/xxx) -> servlet
   std::unordered_map<std::string, IServletCreator::ptr> m_datas;
+  // 模糊匹配 servlet 数组
   // uri(/sylar/*) -> servlet
   std::vector<std::pair<std::string, IServletCreator::ptr>> m_globs;
   // 默认servlet，所有路径都没匹配到时使用

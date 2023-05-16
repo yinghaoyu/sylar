@@ -8,5 +8,6 @@
 *.rl.cc
 *.dat
 *.db
+*.roaring
 /.clangd/
 compile_commands.json

@@ -318,6 +318,11 @@ class RedisUtil {
   static ReplyPtr Cmd(const std::string& name, const char* fmt, va_list ap);
   static ReplyPtr Cmd(const std::string& name,
                       const std::vector<std::string>& args);
+
+  static ReplyPtr TryCmd(const std::string& name, uint32_t count,
+                         const char* fmt, ...);
+  static ReplyPtr TryCmd(const std::string& name, uint32_t count,
+                         const std::vector<std::string>& args);
 };
 
 }  // namespace sylar

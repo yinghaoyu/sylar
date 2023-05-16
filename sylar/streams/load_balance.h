@@ -31,12 +31,14 @@ class HolderStats {
     return sylar::Atomic::addFetch(m_timeouts, v);
   }
   uint32_t incOks(uint32_t v) { return sylar::Atomic::addFetch(m_oks, v); }
-  uint32_t incErrs(uint32_t v) { return sylar::Atomic::addFetch(m_errs, 0); }
+  uint32_t incErrs(uint32_t v) { return sylar::Atomic::addFetch(m_errs, v); }
 
-  uint32_t decDoing(uint32_t v) { return sylar::Atomic::subFetch(m_doing, 0); }
+  uint32_t decDoing(uint32_t v) { return sylar::Atomic::subFetch(m_doing, v); }
   void clear();
 
   float getWeight(float rate = 1.0f);
+
+  std::string toString();
 
  private:
   uint32_t m_usedTime = 0;
@@ -53,6 +55,8 @@ class HolderStatsSet {
   HolderStats& get(const uint32_t& now = time(0));
 
   float getWeight(const uint32_t& now = time(0));
+
+  HolderStats getTotal();
 
  private:
   void init(const uint32_t& now);
@@ -86,6 +90,8 @@ class LoadBalanceItem {
   virtual bool isValid();
   void close();
 
+  std::string toString();
+
  protected:
   uint64_t m_id = 0;
   SocketStream::ptr m_stream;
@@ -117,14 +123,18 @@ class LoadBalance : public ILoadBalance {
   LoadBalanceItem::ptr getById(uint64_t id);
   void update(const std::unordered_map<uint64_t, LoadBalanceItem::ptr>& adds,
               std::unordered_map<uint64_t, LoadBalanceItem::ptr>& dels);
+  void init();
+
+  std::string statusString(const std::string& prefix);
 
  protected:
-  void init();
   virtual void initNolock() = 0;
+  void checkInit();
 
  protected:
   RWMutexType m_mutex;
   std::unordered_map<uint64_t, LoadBalanceItem::ptr> m_datas;
+  uint64_t m_lastInitTime = 0;
 };
 
 class RoundRobinLoadBalance : public LoadBalance {
@@ -166,7 +176,7 @@ class WeightLoadBalance : public LoadBalance {
   std::vector<LoadBalanceItem::ptr> m_items;
 
  private:
-  std::vector<int32_t> m_weights;
+  std::vector<int64_t> m_weights;
 };
 
 // class FairLoadBalance : public LoadBalance {
@@ -207,6 +217,8 @@ class SDLoadBalance {
   void initConf(
       const std::unordered_map<
           std::string, std::unordered_map<std::string, std::string>>& confs);
+
+  std::string statusString();
 
  private:
   void onServiceChange(

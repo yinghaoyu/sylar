@@ -285,7 +285,7 @@ int Application::run_fiber() {
     m_rockSDLoadBalance.reset(new RockSDLoadBalance(m_serviceDiscovery));
 
     std::vector<TcpServer::ptr> svrs;
-    if (getServer("http", svrs)) {
+    if (!getServer("http", svrs)) {
       m_serviceDiscovery->setSelfInfo(sylar::GetIPv4() +
                                       ":0:" + sylar::GetHostName());
     } else {

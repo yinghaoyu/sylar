@@ -56,12 +56,19 @@ if(Protobuf_FOUND)
     include_directories(${Protobuf_INCLUDE_DIRS})
 endif()
 
+#find_package(hiredis-vip REQUIRED)
+#if(HIREDIS_VIP_FOUND)
+#  include_directories(${HIREDIS_VIP_INCLUDE_DIRS})
+#endif()
+
 set(LIB_SRC
     sylar/address.cc
     sylar/application.cc
     sylar/bytearray.cc
     sylar/config.cc
+    sylar/db/fox_thread.cc
     sylar/db/mysql.cc
+    sylar/db/redis.cc
     sylar/db/sqlite3.cc
     sylar/ds/bitmap.cc
     sylar/email/email.cc
@@ -153,10 +160,13 @@ set(LIBS
         tinyxml2
         mysqlclient
         zookeeper_mt
+        event
         ${OPENSSL_LIBRARIES}
         ${PROTOBUF_LIBRARIES}
         ${ZLIB_LIBRARIES}
-        ${SQLite3_LIBRARIES})
+        ${SQLite3_LIBRARIES}
+        #${HIREDIS_VIP_LIBRARIES}
+        hiredis_vip)
 
 if(${BUILD_TEST})
     sylar_add_executable(test1 "tests/test.cc" sylar "${LIBS}")

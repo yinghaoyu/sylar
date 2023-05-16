@@ -221,6 +221,7 @@ if(${BUILD_TEST})
     sylar_add_executable(test_hashmultimap "tests/test_hashmultimap.cc" sylar "${LIBS}")
     sylar_add_executable(test_hashmap "tests/test_hashmap.cc" sylar "${LIBS}")
     sylar_add_executable(test_dict "tests/test_dict.cc" sylar "${LIBS}")
+    sylar_add_executable(test_array "tests/test_array.cc" sylar "${LIBS}")
 
     sylar_add_executable(orm "${ORM_SRCS}" sylar "${LIBS}")
 

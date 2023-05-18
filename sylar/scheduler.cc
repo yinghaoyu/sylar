@@ -23,13 +23,14 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string& name)
 
     m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
     sylar::Thread::SetName(m_name);
-
+    // use_caller 线程的主协程作为调度协程
     t_scheduler_fiber = m_rootFiber.get();
     m_rootThread = sylar::GetThreadId();
     m_threadIds.push_back(m_rootThread);
   } else {
     m_rootThread = -1;
   }
+  // 不包括 use_caller 线程
   m_threadCount = threads;
 }
 
@@ -62,13 +63,6 @@ void Scheduler::start() {
                                   m_name + "_" + std::to_string(i)));
     m_threadIds.push_back(m_threads[i]->getId());
   }
-  lock.unlock();
-
-  // if(m_rootFiber) {
-  //     //m_rootFiber->swapIn();
-  //     m_rootFiber->call();
-  //     SYLAR_LOG_INFO(g_logger) << "call out " << m_rootFiber->getState();
-  // }
 }
 
 void Scheduler::stop() {
@@ -80,14 +74,17 @@ void Scheduler::stop() {
     m_stopping = true;
 
     if (stopping()) {
+      // 可以停止，则立即停止
       return;
     }
   }
+  // 还不能立即停止
 
-  // bool exit_on_this_fiber = false;
   if (m_rootThread != -1) {
+    // 使用了 use_caller，调度器归属调用线程
     SYLAR_ASSERT(GetThis() == this);
   } else {
+    // 否则，调度器归属线程池的线程
     SYLAR_ASSERT(GetThis() != this);
   }
 
@@ -101,17 +98,10 @@ void Scheduler::stop() {
   }
 
   if (m_rootFiber) {
-    // while(!stopping()) {
-    //     if(m_rootFiber->getState() == Fiber::TERM
-    //             || m_rootFiber->getState() == Fiber::EXCEPT) {
-    //         m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0,
-    //         true)); SYLAR_LOG_INFO(g_logger) << " root fiber is term, reset";
-    //         t_fiber = m_rootFiber.get();
-    //     }
-    //     m_rootFiber->call();
-    // }
     if (!stopping()) {
+      // use_caller 的调度协程下还有协程没结束，需要调度执行
       m_rootFiber->call();
+      // use_caller 的调度协程下所有协程都结束了，从这里返回
     }
   }
 
@@ -121,11 +111,10 @@ void Scheduler::stop() {
     thrs.swap(m_threads);
   }
 
+  // 等待所有线程结束
   for (auto& i : thrs) {
     i->join();
   }
-  // if(exit_on_this_fiber) {
-  // }
 }
 
 void Scheduler::setThis() {
@@ -135,8 +124,10 @@ void Scheduler::setThis() {
 void Scheduler::run() {
   SYLAR_LOG_DEBUG(g_logger) << m_name << " run";
   set_hook_enable(true);
+  // 调度器归属当前线程
   setThis();
   if (sylar::GetThreadId() != m_rootThread) {
+    // 线程池线程的主协程作为调度协程
     t_scheduler_fiber = Fiber::GetThis().get();
   }
 
@@ -204,7 +195,7 @@ void Scheduler::run() {
       } else if (cb_fiber->getState() == Fiber::EXCEPT ||
                  cb_fiber->getState() == Fiber::TERM) {
         cb_fiber->reset(nullptr);
-      } else {  // if(cb_fiber->getState() != Fiber::TERM) {
+      } else {
         cb_fiber->m_state = Fiber::HOLD;
         cb_fiber.reset();
       }
@@ -250,6 +241,7 @@ void Scheduler::switchTo(int thread) {
   SYLAR_ASSERT(Scheduler::GetThis() != nullptr);
   if (Scheduler::GetThis() == this) {
     if (thread == -1 || thread == sylar::GetThreadId()) {
+      // 切换的目标是自己，无需切换
       return;
     }
   }

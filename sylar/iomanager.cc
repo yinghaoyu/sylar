@@ -82,9 +82,6 @@ void IOManager::FdContext::triggerEvent(IOManager::Event event) {
   //     << " triggerEvent event=" << event
   //     << " events=" << events;
   SYLAR_ASSERT(events & event);
-  // if(SYLAR_UNLIKELY(!(event & event))) {
-  //     return;
-  // }
   events = (Event)(events & ~event);
   EventContext& ctx = getContext(event);
   if (ctx.cb) {
@@ -93,7 +90,6 @@ void IOManager::FdContext::triggerEvent(IOManager::Event event) {
     ctx.scheduler->schedule(&ctx.fiber);
   }
   ctx.scheduler = nullptr;
-  return;
 }
 
 IOManager::IOManager(size_t threads, bool use_caller, const std::string& name)

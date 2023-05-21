@@ -85,6 +85,8 @@ void IOManager::FdContext::triggerEvent(IOManager::Event event) {
   events = (Event)(events & ~event);
   EventContext& ctx = getContext(event);
   if (ctx.cb) {
+    // schedule 里面用了 swap
+    // 调度结束 ctx.cb 就会变成 nullptr
     ctx.scheduler->schedule(&ctx.cb);
   } else {
     ctx.scheduler->schedule(&ctx.fiber);
@@ -155,6 +157,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
 
   FdContext::MutexType::Lock lock2(fd_ctx->mutex);
   if (SYLAR_UNLIKELY(fd_ctx->events & event)) {
+    // 同一个 fd 添加已存在的事件，没有意义
     SYLAR_LOG_ERROR(g_logger)
         << "addEvent assert fd=" << fd << " event=" << (EPOLL_EVENTS)event
         << " fd_ctx.event=" << (EPOLL_EVENTS)fd_ctx->events;
@@ -168,6 +171,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
 
   int rt = epoll_ctl(m_epfd, op, fd, &epevent);
   if (rt) {
+    // 返回值非 0 表示出错
     SYLAR_LOG_ERROR(g_logger)
         << "epoll_ctl(" << m_epfd << ", " << (EpollCtlOp)op << ", " << fd
         << ", " << (EPOLL_EVENTS)epevent.events << "):" << rt << " (" << errno
@@ -179,6 +183,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> cb) {
   ++m_pendingEventCount;
   fd_ctx->events = (Event)(fd_ctx->events | event);
   FdContext::EventContext& event_ctx = fd_ctx->getContext(event);
+  // 首次添加，所有的值应该都是空的
   SYLAR_ASSERT(!event_ctx.scheduler && !event_ctx.fiber && !event_ctx.cb);
 
   event_ctx.scheduler = Scheduler::GetThis();
@@ -306,6 +311,7 @@ IOManager* IOManager::GetThis() {
 
 void IOManager::tickle() {
   if (!hasIdleThreads()) {
+    // 没有空闲的线程，调度也没有意义
     return;
   }
   int rt = write(m_tickleFds[1], "T", 1);
@@ -324,21 +330,24 @@ bool IOManager::stopping() {
 
 void IOManager::idle() {
   SYLAR_LOG_DEBUG(g_logger) << "idle";
+  // 因为用的是协程，栈大小设置的可能比较小
+  // 最好不要在栈上分配很大的数组
   const uint64_t MAX_EVNETS = 256;
   epoll_event* events = new epoll_event[MAX_EVNETS]();
   std::shared_ptr<epoll_event> shared_events(
       events, [](epoll_event* ptr) { delete[] ptr; });
 
   while (true) {
-    uint64_t next_timeout = 0;
+    uint64_t next_timeout = 0;  // 最小的定时器的超时时间间隔
     if (SYLAR_UNLIKELY(stopping(next_timeout))) {
+      // 已经结束，直接离开
       SYLAR_LOG_INFO(g_logger) << "name=" << getName() << " idle stopping exit";
       break;
     }
 
     int rt = 0;
     do {
-      static const int MAX_TIMEOUT = 3000;
+      static const int MAX_TIMEOUT = 3000;  // epoll 忙等毫秒级
       if (next_timeout != ~0ull) {
         next_timeout =
             (int)next_timeout > MAX_TIMEOUT ? MAX_TIMEOUT : next_timeout;
@@ -355,6 +364,7 @@ void IOManager::idle() {
     std::vector<std::function<void()>> cbs;
     listExpiredCb(cbs);
     if (!cbs.empty()) {
+      // 处理超时定时器的回调函数
       // SYLAR_LOG_DEBUG(g_logger) << "on timer cbs.size=" << cbs.size();
       schedule(cbs.begin(), cbs.end());
       cbs.clear();
@@ -364,10 +374,12 @@ void IOManager::idle() {
     //     SYLAR_LOG_INFO(g_logger) << "epoll wait events=" << rt;
     // }
 
+    // 处理一下事件
     for (int i = 0; i < rt; ++i) {
       epoll_event& event = events[i];
       if (event.data.fd == m_tickleFds[0]) {
         uint8_t dummy[256];
+        // tickleFds 设置的是 EPOLLET，因此需要循环读干净
         while (read(m_tickleFds[0], dummy, sizeof(dummy)) > 0)
           ;
         continue;
@@ -376,6 +388,7 @@ void IOManager::idle() {
       FdContext* fd_ctx = (FdContext*)event.data.ptr;
       FdContext::MutexType::Lock lock(fd_ctx->mutex);
       if (event.events & (EPOLLERR | EPOLLHUP)) {
+        // 错误和中断事件
         event.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->events;
       }
       int real_events = NONE;
@@ -387,6 +400,7 @@ void IOManager::idle() {
       }
 
       if ((fd_ctx->events & real_events) == NONE) {
+        // 事件已经被处理
         continue;
       }
 
@@ -406,6 +420,7 @@ void IOManager::idle() {
       // SYLAR_LOG_INFO(g_logger) << " fd=" << fd_ctx->fd << " events=" <<
       // fd_ctx->events
       //                          << " real_events=" << real_events;
+      // 触发事件，关注读写
       if (real_events & READ) {
         fd_ctx->triggerEvent(READ);
         --m_pendingEventCount;
@@ -416,15 +431,19 @@ void IOManager::idle() {
       }
     }
 
+    // 让出 idle 协程的执行权
+
     Fiber::ptr cur = Fiber::GetThis();
     auto raw_ptr = cur.get();
     cur.reset();
-
+    // 执行 swapOut 后
+    // 从 scheduler::run() 的 idle_fiber->swapIn() 处返回
     raw_ptr->swapOut();
   }
 }
 
 void IOManager::onTimerInsertedAtFront() {
+  // 每次有超时时间戳最早的定时器插入，就唤醒一下 epoll_wait
   tickle();
 }
 

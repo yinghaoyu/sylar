@@ -51,6 +51,9 @@ bool Timer::refresh() {
   if (it == m_manager->m_timers.end()) {
     return false;
   }
+  // 注意这里需要先删除，再改时间
+  // 因为定时器是放在 set 里的，我们自定义了排序规则
+  // 如果先改时间，这个定时器的顺序就会乱掉，find 就找不到了
   m_manager->m_timers.erase(it);
   m_next = sylar::GetCurrentMS() + m_ms;
   m_manager->m_timers.insert(shared_from_this());
@@ -114,21 +117,24 @@ uint64_t TimerManager::getNextTimer() {
   RWMutexType::ReadLock lock(m_mutex);
   m_tickled = false;
   if (m_timers.empty()) {
+    // 没有定时器任务，返回最大时间戳
     return ~0ull;
   }
 
   const Timer::ptr& next = *m_timers.begin();
   uint64_t now_ms = sylar::GetCurrentMS();
   if (now_ms >= next->m_next) {
+    // 说明有定时器需要超时处理
     return 0;
   } else {
+    // 到下一个定时器超时需要等待的时间
     return next->m_next - now_ms;
   }
 }
 
 void TimerManager::listExpiredCb(std::vector<std::function<void()>>& cbs) {
   uint64_t now_ms = sylar::GetCurrentMS();
-  std::vector<Timer::ptr> expired;
+  std::vector<Timer::ptr> expired;  // 已经超时的定时器
   {
     RWMutexType::ReadLock lock(m_mutex);
     if (m_timers.empty()) {
@@ -147,10 +153,14 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>>& cbs) {
   }
 
   Timer::ptr now_timer(new Timer(now_ms));
+  // 暴力方法，系统时间改过，定时器全部设置成超时
   auto it = rollover ? m_timers.end() : m_timers.lower_bound(now_timer);
   while (it != m_timers.end() && (*it)->m_next == now_ms) {
+    // lower_bound 是找到第一个 >= now_timer 的位置
+    // 定时器可能存在多个时间戳一样的，因此和 now_ms 相等的定时器也要全部处理
     ++it;
   }
+  // 把过期的定时器全都加入 expired
   expired.insert(expired.begin(), m_timers.begin(), it);
   m_timers.erase(m_timers.begin(), it);
   cbs.reserve(expired.size());
@@ -158,9 +168,11 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>>& cbs) {
   for (auto& timer : expired) {
     cbs.push_back(timer->m_cb);
     if (timer->m_recurring) {
+      // 循环定时器需再次加入
       timer->m_next = now_ms + timer->m_ms;
       m_timers.insert(timer);
     } else {
+      // cb 置 nullptr 表示已经处理过了
       timer->m_cb = nullptr;
     }
   }
@@ -170,6 +182,7 @@ void TimerManager::addTimer(Timer::ptr val, RWMutexType::WriteLock& lock) {
   auto it = m_timers.insert(val).first;
   bool at_front = (it == m_timers.begin()) && !m_tickled;
   if (at_front) {
+    // 减少频繁调用 addTimer 导致多次调用 onTimerInsertedAtFront
     m_tickled = true;
   }
   lock.unlock();
@@ -179,6 +192,7 @@ void TimerManager::addTimer(Timer::ptr val, RWMutexType::WriteLock& lock) {
   }
 }
 
+// 检测服务器是否调整了系统时间
 bool TimerManager::detectClockRollover(uint64_t now_ms) {
   bool rollover = false;
   if (now_ms < m_previouseTime && now_ms < (m_previouseTime - 60 * 60 * 1000)) {

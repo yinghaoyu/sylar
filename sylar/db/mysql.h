@@ -43,8 +43,8 @@ class MySQLRes : public ISQLData {
 
   MYSQL_RES* get() const { return m_data.get(); }
 
-  int getErrno() const { return m_errno; }
-  const std::string& getErrStr() const { return m_errstr; }
+  int getErrno() const override { return m_errno; }
+  const std::string& getErrStr() const override { return m_errstr; }
 
   bool foreach (data_cb cb);
 
@@ -86,8 +86,8 @@ class MySQLStmtRes : public ISQLData {
   static MySQLStmtRes::ptr Create(std::shared_ptr<MySQLStmt> stmt);
   ~MySQLStmtRes();
 
-  int getErrno() const { return m_errno; }
-  const std::string& getErrStr() const { return m_errstr; }
+  int getErrno() const override { return m_errno; }
+  const std::string& getErrStr() const override { return m_errstr; }
 
   int getDataCount() override;
   int getColumnCount() override;

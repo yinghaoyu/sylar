@@ -37,12 +37,12 @@ class Env {
 
  private:
   RWMutexType m_mutex;
-  std::map<std::string, std::string> m_args;
-  std::vector<std::pair<std::string, std::string>> m_helps;
+  std::map<std::string, std::string> m_args;                 // 参数列表
+  std::vector<std::pair<std::string, std::string>> m_helps;  // 帮助列表
 
-  std::string m_program;
-  std::string m_exe;
-  std::string m_cwd;
+  std::string m_program;  // 当前程序名
+  std::string m_exe;      // 当前程序的绝对路径
+  std::string m_cwd;      // 当前程序的工作目录
 };
 
 typedef sylar::Singleton<Env> EnvMgr;

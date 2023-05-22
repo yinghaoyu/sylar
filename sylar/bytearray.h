@@ -10,6 +10,7 @@
 
 namespace sylar {
 
+// Node 链表实现 ByteArray 数组
 class ByteArray {
  public:
   typedef std::shared_ptr<ByteArray> ptr;
@@ -19,9 +20,9 @@ class ByteArray {
     Node();
     ~Node();
 
-    char* ptr;
-    Node* next;
-    size_t size;
+    char* ptr;    // 当前节点存储位置
+    Node* next;   // 下一个节点
+    size_t size;  // 每个节点的大小为 size * sizeof(char)
   };
 
   ByteArray(size_t base_size = 4096);
@@ -119,13 +120,13 @@ class ByteArray {
   size_t getCapacity() const { return m_capacity - m_position; }
 
  private:
-  size_t m_baseSize;
-  size_t m_position;
-  size_t m_capacity;
-  size_t m_size;
-  int8_t m_endian;
-  Node* m_root;
-  Node* m_cur;
+  size_t m_baseSize;  // 每个节点的初始大小
+  size_t m_position;  // 当在 array 访问的位置
+  size_t m_capacity;  // array 的容量上限
+  size_t m_size;      // array 的使用容量
+  int8_t m_endian;    // 1小端 2大端
+  Node* m_root;       // 链表节点头
+  Node* m_cur;        // 当前在访问的节点
 };
 
 }  // namespace sylar

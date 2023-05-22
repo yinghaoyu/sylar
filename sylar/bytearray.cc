@@ -335,22 +335,26 @@ void ByteArray::write(const void* buf, size_t size) {
   if (size == 0) {
     return;
   }
+  // 尝试扩容
   addCapacity(size);
 
-  size_t npos = m_position % m_baseSize;
-  size_t ncap = m_cur->size - npos;
-  size_t bpos = 0;
+  size_t npos = m_position % m_baseSize;  // 节点内偏移
+  size_t ncap = m_cur->size - npos;       // 当前节点的剩余大小
+  size_t bpos = 0;                        // 在 buf 内的偏移
 
   while (size > 0) {
     if (ncap >= size) {
+      // 写长度 <= 节点剩余大小
       memcpy(m_cur->ptr + npos, (const char*)buf + bpos, size);
       if (m_cur->size == (npos + size)) {
+        // 当前节点写完了，切换到下一块
         m_cur = m_cur->next;
       }
       m_position += size;
       bpos += size;
       size = 0;
     } else {
+      // 写长度 > 节点剩余大小
       memcpy(m_cur->ptr + npos, (const char*)buf + bpos, ncap);
       m_position += ncap;
       bpos += ncap;
@@ -362,6 +366,7 @@ void ByteArray::write(const void* buf, size_t size) {
   }
 
   if (m_position > m_size) {
+    // 扩容过，更新一下 array 大小
     m_size = m_position;
   }
 }
@@ -371,19 +376,22 @@ void ByteArray::read(void* buf, size_t size) {
     throw std::out_of_range("not enough len");
   }
 
-  size_t npos = m_position % m_baseSize;
-  size_t ncap = m_cur->size - npos;
-  size_t bpos = 0;
+  size_t npos = m_position % m_baseSize;  // 在节点内的偏移
+  size_t ncap = m_cur->size - npos;       // 节点剩余大小
+  size_t bpos = 0;                        // 在 buf 的偏移
   while (size > 0) {
     if (ncap >= size) {
+      // 读取长度 <= 节点剩余大小
       memcpy((char*)buf + bpos, m_cur->ptr + npos, size);
       if (m_cur->size == (npos + size)) {
+        // 当前节点读完了，切换到下一块
         m_cur = m_cur->next;
       }
       m_position += size;
       bpos += size;
       size = 0;
     } else {
+      // 读取长度 > 节点剩余大小
       memcpy((char*)buf + bpos, m_cur->ptr + npos, ncap);
       m_position += ncap;
       bpos += ncap;
@@ -497,14 +505,15 @@ void ByteArray::addCapacity(size_t size) {
   if (old_cap >= size) {
     return;
   }
-
+  // 需要扩容
   size = size - old_cap;
+  // 扩容需要的节点数
   size_t count = ceil(1.0 * size / m_baseSize);
   Node* tmp = m_root;
   while (tmp->next) {
     tmp = tmp->next;
   }
-
+  // 把扩容的节点加入链表
   Node* first = NULL;
   for (size_t i = 0; i < count; ++i) {
     tmp->next = new Node(m_baseSize);

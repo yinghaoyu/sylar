@@ -80,10 +80,10 @@ class SQLite3Data : public ISQLData {
 
   int getDataCount() override;
   int getColumnCount() override;
-  int getColumnBytes(int idx);
-  int getColumnType(int idx);
+  int getColumnBytes(int idx) override;
+  int getColumnType(int idx) override;
 
-  std::string getColumnName(int idx);
+  std::string getColumnName(int idx) override;
 
   bool isNull(int idx) override;
   int8_t getInt8(int idx) override;
@@ -100,7 +100,7 @@ class SQLite3Data : public ISQLData {
   std::string getBlob(int idx) override;
   time_t getTime(int idx) override;
 
-  bool next();
+  bool next() override;
 
  private:
   int m_errno;

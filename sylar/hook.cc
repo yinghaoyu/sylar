@@ -102,11 +102,13 @@ static ssize_t do_io(int fd, OriginFun fun, const char* hook_fun_name,
   }
 
   uint64_t to = ctx->getTimeout(timeout_so);
+  // 超时条件
   std::shared_ptr<timer_info> tinfo(new timer_info);
 
 retry:
   ssize_t n = fun(fd, std::forward<Args>(args)...);
   while (n == -1 && errno == EINTR) {
+    // 被打断了，需要不断重试
     n = fun(fd, std::forward<Args>(args)...);
   }
   if (n == -1 && errno == EAGAIN) {
@@ -115,11 +117,14 @@ retry:
     std::weak_ptr<timer_info> winfo(tinfo);
 
     if (to != (uint64_t)-1) {
+      // 设置了超时时间
       timer = iom->addConditionTimer(
           to,
           [winfo, fd, iom, event]() {
+            // 超时回调
             auto t = winfo.lock();
             if (!t || t->cancelled) {
+              // 定时器已经失效
               return;
             }
             t->cancelled = ETIMEDOUT;
@@ -127,9 +132,10 @@ retry:
           },
           winfo);
     }
-
+    // 这里没设置回调函数，默认用的是当前协程作为回调
     int rt = iom->addEvent(fd, (sylar::IOManager::Event)(event));
     if (SYLAR_UNLIKELY(rt)) {
+      // 添加事件失败
       SYLAR_LOG_ERROR(g_logger)
           << hook_fun_name << " addEvent(" << fd << ", " << event << ")";
       if (timer) {
@@ -137,14 +143,21 @@ retry:
       }
       return -1;
     } else {
+      // 添加事件成功
       sylar::Fiber::YieldToHold();
+      // 两个唤醒条件：
+      // 1. 定时器超时
+      // 2. 前面 iom->addEvent 后数据到达
       if (timer) {
+        // 设置了定时器，就要取消
         timer->cancel();
       }
       if (tinfo->cancelled) {
+        // 定时器超时，设置一下错误，返回 -1
         errno = tinfo->cancelled;
         return -1;
       }
+      // 有数据，继续循环读取
       goto retry;
     }
   }
@@ -166,7 +179,7 @@ unsigned int sleep(unsigned int seconds) {
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   iom->addTimer(
       seconds * 1000,
-      std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+      std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
                     sylar::IOManager::schedule,
                 iom, fiber, -1));
   sylar::Fiber::YieldToHold();
@@ -181,7 +194,7 @@ int usleep(useconds_t usec) {
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   iom->addTimer(
       usec / 1000,
-      std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+      std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
                     sylar::IOManager::schedule,
                 iom, fiber, -1));
   sylar::Fiber::YieldToHold();
@@ -198,7 +211,7 @@ int nanosleep(const struct timespec* req, struct timespec* rem) {
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   iom->addTimer(
       timeout_ms,
-      std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+      std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
                     sylar::IOManager::schedule,
                 iom, fiber, -1));
   sylar::Fiber::YieldToHold();
@@ -264,15 +277,18 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
 
   int rt = iom->addEvent(fd, sylar::IOManager::WRITE);
   if (rt == 0) {
+    // 连接成功
     sylar::Fiber::YieldToHold();
     if (timer) {
       timer->cancel();
     }
     if (tinfo->cancelled) {
+      // connect 被超时取消
       errno = tinfo->cancelled;
       return -1;
     }
   } else {
+    // 连接失败
     if (timer) {
       timer->cancel();
     }

@@ -143,7 +143,7 @@ class Scheduler {
   std::atomic<size_t> m_activeThreadCount = {0};  // 工作线程数
   std::atomic<size_t> m_idleThreadCount = {0};    // 空闲线程数
   bool m_stopping = true;                         // 是否正在停止
-  bool m_autoStop = false;                        // 是否自动停止
+  bool m_autoStop = false;                        // 是否手动停止
   int m_rootThread = 0;                           // 主线程id(use_caller)
 };
 

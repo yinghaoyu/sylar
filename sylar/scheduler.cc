@@ -144,13 +144,15 @@ void Scheduler::run() {
       auto it = m_fibers.begin();
       while (it != m_fibers.end()) {
         if (it->thread != -1 && it->thread != sylar::GetThreadId()) {
+          // 协程指定了线程
           ++it;
-          tickle_me = true;
+          tickle_me = true;  // 需要通知其他线程
           continue;
         }
 
         SYLAR_ASSERT(it->fiber || it->cb);
         if (it->fiber && it->fiber->getState() == Fiber::EXEC) {
+          // 正在执行的协程，不需要调度
           ++it;
           continue;
         }
@@ -170,32 +172,43 @@ void Scheduler::run() {
 
     if (ft.fiber && (ft.fiber->getState() != Fiber::TERM &&
                      ft.fiber->getState() != Fiber::EXCEPT)) {
+      // 协程的形式，调度执行
       ft.fiber->swapIn();
+      // 从调度恢复
       --m_activeThreadCount;
 
       if (ft.fiber->getState() == Fiber::READY) {
+        // 恢复后处于 READY，还需要调度执行
         schedule(ft.fiber);
       } else if (ft.fiber->getState() != Fiber::TERM &&
                  ft.fiber->getState() != Fiber::EXCEPT) {
+        // 调度结束，把状态改为 HOLD，等待下次调度
         ft.fiber->m_state = Fiber::HOLD;
       }
       ft.reset();
     } else if (ft.cb) {
+      // 回调函数的形式
       if (cb_fiber) {
         cb_fiber->reset(ft.cb);
       } else {
+        // 给回调函数分配一个协程
         cb_fiber.reset(new Fiber(ft.cb));
       }
       ft.reset();
+      // 调度执行
       cb_fiber->swapIn();
+      // 从调度恢复
       --m_activeThreadCount;
       if (cb_fiber->getState() == Fiber::READY) {
+        // 恢复后处于 READY，还需要调度执行
         schedule(cb_fiber);
         cb_fiber.reset();
       } else if (cb_fiber->getState() == Fiber::EXCEPT ||
                  cb_fiber->getState() == Fiber::TERM) {
+        // 执行结束，不再调度
         cb_fiber->reset(nullptr);
       } else {
+        // 调度结束，把状态改为 HOLD，等待下次调度
         cb_fiber->m_state = Fiber::HOLD;
         cb_fiber.reset();
       }

@@ -286,6 +286,8 @@ class MySQLStmt : public IStmt, public std::enable_shared_from_this<MySQLStmt> {
 class MySQLManager {
  public:
   typedef sylar::Mutex MutexType;
+  typedef std::map<std::string, std::list<MySQL*>> CONN_TYPE;
+  typedef std::map<std::string, std::map<std::string, std::string>> DEF_TYPE;
 
   MySQLManager();
   ~MySQLManager();
@@ -316,8 +318,8 @@ class MySQLManager {
  private:
   uint32_t m_maxConn;
   MutexType m_mutex;
-  std::map<std::string, std::list<MySQL*>> m_conns;
-  std::map<std::string, std::map<std::string, std::string>> m_dbDefines;
+  CONN_TYPE m_conns;     // 每个 db 的空闲连接
+  DEF_TYPE m_dbDefines;  // 每个 db 的配置参数
 };
 
 class MySQLUtil {

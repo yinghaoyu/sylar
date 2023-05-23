@@ -53,6 +53,7 @@ struct MySQLThreadIniter {
 static MYSQL* mysql_init(std::map<std::string, std::string>& params,
                          const int& timeout) {
 
+  // 多线程下每个线程都需要初始化 mysql 环境
   static thread_local MySQLThreadIniter s_thread_initer;
 
   MYSQL* mysql = ::mysql_init(nullptr);
@@ -62,10 +63,13 @@ static MYSQL* mysql_init(std::map<std::string, std::string>& params,
   }
 
   if (timeout > 0) {
+    // 设置连接的超时时间
     mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
   }
   bool close = false;
+  // 不开启自动重连
   mysql_options(mysql, MYSQL_OPT_RECONNECT, &close);
+  // 字符集设置为 UTF-8 编码的 utf8mb4 格式
   mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8mb4");
 
   int port = sylar::GetParamValue(params, "port", 0);
@@ -222,7 +226,9 @@ MySQLStmt::ptr MySQLStmt::Create(MySQL::ptr db, const std::string& stmt) {
   int count = mysql_stmt_param_count(st);
   MySQLStmt::ptr rt(new MySQLStmt(db, st));
   rt->m_binds.resize(count);
-  memset(&rt->m_binds[0], 0, sizeof(rt->m_binds[0]) * count);
+  for (int i = 0; i < count; ++i) {
+    memset(&rt->m_binds[i], 0, sizeof(rt->m_binds[i]));
+  }
   return rt;
 }
 
@@ -457,22 +463,7 @@ int MySQLStmt::bindBlob(int idx, const std::string& value) {
   return 0;
 }
 
-// int MySQLStmt::bindTime(int idx, const MYSQL_TIME& value, int type) {
-//     idx -= 1;
-//     m_binds[idx].buffer_type = (enum_field_types)type;
-//     m_binds[idx].buffer = &value;
-//     m_binds[idx].buffer_length = sizeof(value);
-//     return 0;
-// }
-
 int MySQLStmt::bindTime(int idx, const time_t& value) {
-  // idx -= 1;
-  // m_binds[idx].buffer_type = MYSQL_TYPE_TIMESTAMP;
-  // MYSQL_TIME* mt = (MYSQL_TIME*)malloc(sizeof(MYSQL_TIME));
-  // time_t_to_mysql_time(value, *mt);
-  // m_binds[idx].buffer = mt;
-  // m_binds[idx].buffer_length = sizeof(MYSQL_TIME);
-  // return 0;
   return bindString(idx, sylar::Time2Str(value));
 }
 
@@ -614,7 +605,9 @@ MySQLStmtRes::ptr MySQLStmtRes::Create(std::shared_ptr<MySQLStmt> stmt) {
   MYSQL_FIELD* fields = mysql_fetch_fields(res);
 
   rt->m_binds.resize(num);
-  memset(&rt->m_binds[0], 0, sizeof(rt->m_binds[0]) * num);
+  for (int i = 0; i < num; ++i) {
+    memset(&rt->m_binds[i], 0, sizeof(rt->m_binds[i]));
+  }
   rt->m_datas.resize(num);
 
   for (int i = 0; i < num; ++i) {
@@ -950,6 +943,7 @@ MySQLTransaction::MySQLTransaction(MySQL::ptr mysql, bool auto_commit)
       m_hasError(false) {}
 
 MySQLManager::MySQLManager() : m_maxConn(10) {
+  // 初始化 mysql 库
   mysql_library_init(0, nullptr, nullptr);
 }
 

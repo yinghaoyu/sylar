@@ -179,7 +179,7 @@ unsigned int sleep(unsigned int seconds) {
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   iom->addTimer(
       seconds * 1000,
-      std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+      std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
                     sylar::IOManager::schedule,
                 iom, fiber, -1));
   sylar::Fiber::YieldToHold();
@@ -194,7 +194,7 @@ int usleep(useconds_t usec) {
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   iom->addTimer(
       usec / 1000,
-      std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+      std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
                     sylar::IOManager::schedule,
                 iom, fiber, -1));
   sylar::Fiber::YieldToHold();
@@ -211,7 +211,7 @@ int nanosleep(const struct timespec* req, struct timespec* rem) {
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   iom->addTimer(
       timeout_ms,
-      std::bind((void (sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
+      std::bind((void(sylar::Scheduler::*)(sylar::Fiber::ptr, int thread)) &
                     sylar::IOManager::schedule,
                 iom, fiber, -1));
   sylar::Fiber::YieldToHold();
@@ -251,11 +251,14 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
 
   int n = connect_f(fd, addr, addrlen);
   if (n == 0) {
+    // 已经成功
     return 0;
   } else if (n != -1 || errno != EINPROGRESS) {
+    // 其他错误
     return n;
   }
-
+  // n == -1 && errno == EINPROGRESS
+  // 表示连接请求正在进行中...
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   sylar::Timer::ptr timer;
   std::shared_ptr<timer_info> tinfo(new timer_info);
@@ -267,6 +270,8 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
         [winfo, fd, iom]() {
           auto t = winfo.lock();
           if (!t || t->cancelled) {
+            // 超时回调，如果发现 winfo 已经失效了
+            // 说明已经被处理
             return;
           }
           t->cancelled = ETIMEDOUT;
@@ -276,25 +281,32 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
   }
 
   int rt = iom->addEvent(fd, sylar::IOManager::WRITE);
-  if (rt == 0) {
-    // 连接成功
-    sylar::Fiber::YieldToHold();
-    if (timer) {
-      timer->cancel();
-    }
-    if (tinfo->cancelled) {
-      // connect 被超时取消
-      errno = tinfo->cancelled;
-      return -1;
-    }
-  } else {
-    // 连接失败
+  if (SYLAR_UNLIKELY(rt)) {
+    // 添加事件失败
     if (timer) {
       timer->cancel();
     }
     SYLAR_LOG_ERROR(g_logger) << "connect addEvent(" << fd << ", WRITE) error";
+  } else {
+    // 添加事件成功
+    sylar::Fiber::YieldToHold();
+    // 两个唤醒条件：
+    // 1. 定时器超时
+    // 2. 前面 iom->addEvent 后数据到达
+    if (timer) {
+      // 设置了定时器，就要取消
+      timer->cancel();
+    }
+    if (tinfo->cancelled) {
+      // 定时器超时，设置一下错误，返回 -1
+      errno = tinfo->cancelled;
+      return -1;
+    }
   }
-
+  // 发起主动连接的socket可能出现的情况
+  // socket连接失败，可读可写
+  // socket连接成功，会出现两种情况，第一是可写，第二是可读可写
+  // 因此只要关注socket的可写事件，根据getsockopt的返回值来判断是否连接成功
   int error = 0;
   socklen_t len = sizeof(int);
   if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {

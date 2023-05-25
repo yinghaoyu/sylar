@@ -1,11 +1,3 @@
-/**
- * @file socket.h
- * @brief Socket封装
- * @author sylar.yin
- * @email 564628276@qq.com
- * @date 2019-06-05
- * @copyright Copyright (c) 2019年 sylar.yin All rights reserved (www.sylar.top)
- */
 #ifndef __SYLAR_SOCKET_H__
 #define __SYLAR_SOCKET_H__
 
@@ -63,6 +55,7 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
   void setRecvTimeout(int64_t v);
 
   bool getOption(int level, int option, void* result, socklen_t* len);
+
   template <class T>
   bool getOption(int level, int option, T& result) {
     socklen_t length = sizeof(T);
@@ -70,6 +63,7 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
   }
 
   bool setOption(int level, int option, const void* result, socklen_t len);
+
   template <class T>
   bool setOption(int level, int option, const T& value) {
     return setOption(level, option, &value, sizeof(T));

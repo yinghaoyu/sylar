@@ -102,6 +102,8 @@ bool TcpServer::start() {
 void TcpServer::stop() {
   m_isStop = true;
   auto self = shared_from_this();
+  // 这里捕获 self，防止下面函数在异步执行时，TcpServer 对象被析构
+  // 新智能指针的生命周期与 lambda 的生命周期一致
   m_acceptWorker->schedule([this, self]() {
     for (auto& sock : m_socks) {
       sock->cancelAll();

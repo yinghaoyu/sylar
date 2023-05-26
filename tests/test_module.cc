@@ -31,7 +31,7 @@ class MyModule : public sylar::RockModule {
     return true;
   }
 
-  bool onServerReady() {
+  bool onServerReady() override {
     registerService("rock", "sylar.top", "blog");
     auto rpy = sylar::RedisUtil::Cmd("local", "get abc");
     if (!rpy) {
@@ -45,7 +45,7 @@ class MyModule : public sylar::RockModule {
 
   bool handleRockRequest(sylar::RockRequest::ptr request,
                          sylar::RockResponse::ptr response,
-                         sylar::RockStream::ptr stream) {
+                         sylar::RockStream::ptr stream) override {
     // SYLAR_LOG_INFO(g_logger) << "handleRockRequest " << request->toString();
     // sleep(1);
     response->setResult(0);
@@ -72,7 +72,7 @@ class MyModule : public sylar::RockModule {
   }
 
   bool handleRockNotify(sylar::RockNotify::ptr notify,
-                        sylar::RockStream::ptr stream) {
+                        sylar::RockStream::ptr stream) override {
     SYLAR_LOG_INFO(g_logger) << "handleRockNotify " << notify->toString();
     return true;
   }

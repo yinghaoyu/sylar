@@ -109,6 +109,7 @@ class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
   int getProtocol() const { return m_protocol; }
 
   bool isConnected() const { return m_isConnected; }
+  bool checkConnected();
   bool isValid() const;
   int getError();
 

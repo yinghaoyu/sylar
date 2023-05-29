@@ -252,11 +252,13 @@ HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr req, Uri::ptr uri,
         "create socket fail: " + addr->toString() + " errno=" +
             std::to_string(errno) + " errstr=" + std::string(strerror(errno)));
   }
-  if (!sock->connect(addr)) {
+  uint64_t ts1 = sylar::GetCurrentMS();
+  if (!sock->connect(addr, timeout_ms)) {
     return std::make_shared<HttpResult>((int)HttpResult::Error::CONNECT_FAIL,
                                         nullptr,
                                         "connect fail: " + addr->toString());
   }
+  timeout_ms -= sylar::GetCurrentMS() - ts1;
   sock->setRecvTimeout(timeout_ms);
   HttpConnection::ptr conn = std::make_shared<HttpConnection>(sock);
   int rt = conn->sendRequest(req);
@@ -308,7 +310,7 @@ HttpConnectionPool::HttpConnectionPool(const std::string& host,
       m_maxRequest(max_request),
       m_isHttps(is_https) {}
 
-HttpConnection::ptr HttpConnectionPool::getConnection() {
+HttpConnection::ptr HttpConnectionPool::getConnection(uint64_t& timeout_ms) {
   uint64_t now_ms = sylar::GetCurrentMS();
   std::vector<HttpConnection*> invalid_conns;
   HttpConnection* ptr = nullptr;
@@ -346,10 +348,12 @@ HttpConnection::ptr HttpConnectionPool::getConnection() {
       SYLAR_LOG_ERROR(g_logger) << "create sock fail: " << *addr;
       return nullptr;
     }
-    if (!sock->connect(addr)) {
+    uint64_t ts1 = sylar::GetCurrentMS();
+    if (!sock->connect(addr, timeout_ms)) {
       SYLAR_LOG_ERROR(g_logger) << "sock connect fail: " << *addr;
       return nullptr;
     }
+    timeout_ms -= sylar::GetCurrentMS() - ts1;
 
     ptr = new HttpConnection(sock);
     ++m_total;
@@ -455,7 +459,7 @@ HttpResult::ptr HttpConnectionPool::doRequest(
 
 HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr req,
                                               uint64_t timeout_ms) {
-  auto conn = getConnection();
+  auto conn = getConnection(timeout_ms);
   if (!conn) {
     return std::make_shared<HttpResult>(
         (int)HttpResult::Error::POOL_GET_CONNECTION, nullptr,

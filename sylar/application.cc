@@ -1,12 +1,12 @@
-#include "application.h"
-
 #include <signal.h>
 #include <unistd.h>
 
+#include "sylar/application.h"
 #include "sylar/config.h"
 #include "sylar/daemon.h"
 #include "sylar/db/fox_thread.h"
 #include "sylar/db/redis.h"
+#include "sylar/dns.h"
 #include "sylar/env.h"
 #include "sylar/http/ws_server.h"
 #include "sylar/log.h"
@@ -168,6 +168,8 @@ int Application::run_fiber() {
   FoxThreadMgr::GetInstance()->init();
   FoxThreadMgr::GetInstance()->start();
   RedisMgr::GetInstance();
+  DnsMgr::GetInstance()->init();
+  DnsMgr::GetInstance()->start();
 
   auto http_confs = g_servers_conf->getValue();
   std::vector<TcpServer::ptr> svrs;

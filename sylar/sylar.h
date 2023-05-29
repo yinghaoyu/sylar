@@ -3,6 +3,7 @@
 
 #include "db/db.h"
 #include "db/mysql.h"
+#include "db/redis.h"
 #include "db/sqlite3.h"
 
 #include "ds/cache_status.h"

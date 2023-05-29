@@ -119,7 +119,7 @@ class HttpConnectionPool {
                      uint32_t max_alive_time, uint32_t max_request);
 
   // 从 http 连接池中获取一个连接
-  HttpConnection::ptr getConnection();
+  HttpConnection::ptr getConnection(uint64_t& timeout_ms);
 
   HttpResult::ptr doGet(const std::string& url, uint64_t timeout_ms,
                         const std::map<std::string, std::string>& headers = {},
@@ -162,7 +162,7 @@ class HttpConnectionPool {
   bool m_isHttps;           // 是否 https
 
   MutexType m_mutex;
-  std::list<HttpConnection*> m_conns;  // 所有可用连接
+  std::list<HttpConnection*> m_conns;   // 所有可用连接
   std::atomic<uint32_t> m_total = {0};  // 存活连接数
 };
 

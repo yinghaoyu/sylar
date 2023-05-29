@@ -18,12 +18,12 @@ static sylar::ConfigVar<uint32_t>::ptr g_rock_protocol_gzip_min_length =
                           "rock protocol gizp min length");
 
 bool RockBody::serializeToByteArray(ByteArray::ptr bytearray) {
-  bytearray->writeStringVint(m_body);
+  bytearray->writeStringF32(m_body);
   return true;
 }
 
 bool RockBody::parseFromByteArray(ByteArray::ptr bytearray) {
-  m_body = bytearray->readStringVint();
+  m_body = bytearray->readStringF32();
   return true;
 }
 
@@ -163,8 +163,10 @@ RockMsgHeader::RockMsgHeader()
 Message::ptr RockMessageDecoder::parseFrom(Stream::ptr stream) {
   try {
     RockMsgHeader header;
-    if (stream->readFixSize(&header, sizeof(header)) <= 0) {
-      SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder decode head error";
+    int rt = stream->readFixSize(&header, sizeof(header));
+    if (rt <= 0) {
+      SYLAR_LOG_ERROR(g_logger)
+          << "RockMessageDecoder decode head error rt=" << rt;
       return nullptr;
     }
 
@@ -186,9 +188,11 @@ Message::ptr RockMessageDecoder::parseFrom(Stream::ptr stream) {
       return nullptr;
     }
     sylar::ByteArray::ptr ba(new sylar::ByteArray);
-    if (stream->readFixSize(ba, header.length) <= 0) {
+    rt = stream->readFixSize(ba, header.length);
+    if (rt <= 0) {
       SYLAR_LOG_ERROR(g_logger)
-          << "RockMessageDecoder read body fail length=" << header.length;
+          << "RockMessageDecoder read body fail length=" << header.length
+          << " rt=" << rt;
       return nullptr;
     }
 
@@ -259,14 +263,16 @@ int32_t RockMessageDecoder::serializeTo(Stream::ptr stream, Message::ptr msg) {
     header.length = ba->getSize();
   }
   header.length = sylar::byteswapOnLittleEndian(header.length);
-  if (stream->writeFixSize(&header, sizeof(header)) <= 0) {
+  int rt = stream->writeFixSize(&header, sizeof(header));
+  if (rt <= 0) {
     SYLAR_LOG_ERROR(g_logger)
-        << "RockMessageDecoder serializeTo write header fail";
+        << "RockMessageDecoder serializeTo write header fail rt=" << rt;
     return -3;
   }
-  if (stream->writeFixSize(ba, ba->getReadSize()) <= 0) {
+  rt = stream->writeFixSize(ba, ba->getReadSize());
+  if (rt <= 0) {
     SYLAR_LOG_ERROR(g_logger)
-        << "RockMessageDecoder serializeTo write body fail";
+        << "RockMessageDecoder serializeTo write body fail rt=" << rt;
     return -4;
   }
   return sizeof(header) + ba->getSize();

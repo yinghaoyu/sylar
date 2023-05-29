@@ -155,10 +155,10 @@ bool RockNotify::parseFromByteArray(ByteArray::ptr bytearray) {
   return false;
 }
 
-static const uint8_t s_rock_magic[2] = {0xab, 0xcd};
+static const uint8_t s_rock_magic[2] = {0x12, 0x21};
 
 RockMsgHeader::RockMsgHeader()
-    : magic{0xab, 0xcd}, version(1), flag(0), length(0) {}
+    : magic{s_rock_magic[0], s_rock_magic[1]}, version(1), flag(0), length(0) {}
 
 Message::ptr RockMessageDecoder::parseFrom(Stream::ptr stream) {
   try {
@@ -231,7 +231,9 @@ Message::ptr RockMessageDecoder::parseFrom(Stream::ptr stream) {
     return msg;
   } catch (std::exception& e) {
     SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder except:" << e.what();
-  } catch (...) { SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder except"; }
+  } catch (...) {
+    SYLAR_LOG_ERROR(g_logger) << "RockMessageDecoder except";
+  }
   return nullptr;
 }
 

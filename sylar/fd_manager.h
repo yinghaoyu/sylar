@@ -46,7 +46,7 @@ class FdCtx : public std::enable_shared_from_this<FdCtx> {
 // 文件句柄管理类
 class FdManager {
  public:
-  typedef RWMutex RWMutexType;
+  typedef RWSpinlock RWMutexType;
   FdManager();
 
   FdCtx::ptr get(int fd, bool auto_create = false);

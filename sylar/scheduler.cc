@@ -21,7 +21,8 @@ Scheduler::Scheduler(size_t threads, bool use_caller, const std::string& name)
     SYLAR_ASSERT(GetThis() == nullptr);
     t_scheduler = this;
 
-    m_rootFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, true));
+    m_rootFiber.reset(NewFiber(std::bind(&Scheduler::run, this), 0, true),
+                      FreeFiber);
     sylar::Thread::SetName(m_name);
     // use_caller 线程的主协程作为调度协程
     t_scheduler_fiber = m_rootFiber.get();
@@ -50,7 +51,7 @@ Fiber* Scheduler::GetMainFiber() {
 }
 
 void Scheduler::start() {
-  MutexType::Lock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   if (!m_stopping) {
     return;
   }
@@ -107,7 +108,7 @@ void Scheduler::stop() {
 
   std::vector<Thread::ptr> thrs;
   {
-    MutexType::Lock lock(m_mutex);
+    RWMutexType::WriteLock lock(m_mutex);
     thrs.swap(m_threads);
   }
 
@@ -131,7 +132,7 @@ void Scheduler::run() {
     t_scheduler_fiber = Fiber::GetThis().get();
   }
 
-  Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
+  Fiber::ptr idle_fiber(NewFiber(std::bind(&Scheduler::idle, this)), FreeFiber);
   Fiber::ptr cb_fiber;
 
   FiberAndThread ft;
@@ -140,7 +141,7 @@ void Scheduler::run() {
     bool tickle_me = false;
     bool is_active = false;
     {
-      MutexType::Lock lock(m_mutex);
+      RWMutexType::WriteLock lock(m_mutex);
       auto it = m_fibers.begin();
       while (it != m_fibers.end()) {
         if (it->thread != -1 && it->thread != sylar::GetThreadId()) {
@@ -192,7 +193,7 @@ void Scheduler::run() {
         cb_fiber->reset(ft.cb);
       } else {
         // 给回调函数分配一个协程
-        cb_fiber.reset(new Fiber(ft.cb));
+        cb_fiber.reset(NewFiber(ft.cb), FreeFiber);
       }
       ft.reset();
       // 调度执行
@@ -238,7 +239,7 @@ void Scheduler::tickle() {
 }
 
 bool Scheduler::stopping() {
-  MutexType::Lock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   return m_autoStop && m_stopping && m_fibers.empty() &&
          m_activeThreadCount == 0;
 }

@@ -16,7 +16,7 @@ namespace sylar {
 class Scheduler {
  public:
   typedef std::shared_ptr<Scheduler> ptr;
-  typedef Spinlock MutexType;
+  typedef RWSpinlock RWMutexType;
 
   // threads 线程数量
   // use_caller 是否使用当前调用线程
@@ -40,7 +40,7 @@ class Scheduler {
   void schedule(FiberOrCb fc, int thread = -1) {
     bool need_tickle = false;
     {
-      MutexType::Lock lock(m_mutex);
+      RWMutexType::WriteLock lock(m_mutex);
       need_tickle = scheduleNoLock(fc, thread);
     }
 
@@ -56,7 +56,7 @@ class Scheduler {
   void schedule(InputIterator begin, InputIterator end) {
     bool need_tickle = false;
     {
-      MutexType::Lock lock(m_mutex);
+      RWMutexType::WriteLock lock(m_mutex);
       while (begin != end) {
         need_tickle = scheduleNoLock(&*begin, -1) || need_tickle;
         ++begin;
@@ -131,7 +131,7 @@ class Scheduler {
   };
 
  private:
-  MutexType m_mutex;
+  RWMutexType m_mutex;
   std::vector<Thread::ptr> m_threads;  // 线程池
   std::list<FiberAndThread> m_fibers;  // 待执行的协程队列
   Fiber::ptr m_rootFiber;              // 调度协程(use_caller)

@@ -15,7 +15,9 @@ void test_fiber() {
   {
     sylar::Fiber::GetThis();
     SYLAR_LOG_INFO(g_logger) << "main begin";
-    sylar::Fiber::ptr fiber(new sylar::Fiber(run_in_fiber, 0, true));
+    // sylar::Fiber::ptr fiber(new sylar::Fiber(run_in_fiber, 0, true));
+    sylar::Fiber::ptr fiber(sylar::NewFiber(run_in_fiber, 0, true),
+                            sylar::FreeFiber);
     fiber->call();
     SYLAR_LOG_INFO(g_logger) << "main after swapIn";
     fiber->call();

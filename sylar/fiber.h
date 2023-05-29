@@ -19,8 +19,19 @@
 
 namespace sylar {
 class Scheduler;
+class Fiber;
+
+Fiber* NewFiber();
+Fiber* NewFiber(std::function<void()> cb, size_t stacksize = 0,
+                bool use_caller = false);
+void FreeFiber(Fiber* ptr);
+
 class Fiber : public std::enable_shared_from_this<Fiber> {
   friend class Scheduler;
+  friend Fiber* NewFiber();
+  friend Fiber* NewFiber(std::function<void()> cb, size_t stacksize,
+                         bool use_caller);
+  friend void FreeFiber(Fiber* ptr);
 
  public:
   typedef std::shared_ptr<Fiber> ptr;
@@ -116,6 +127,8 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   uint32_t m_stacksize = 0;
   /// 协程状态
   State m_state = INIT;
+  /// 协程运行函数
+  std::function<void()> m_cb;
   /// 协程上下文
 #if FIBER_CONTEXT_TYPE == FIBER_UCONTEXT
   ucontext_t m_ctx;
@@ -124,10 +137,7 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
 #elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
   coctx_t m_ctx;
 #endif
-  /// 协程运行栈指针
-  void* m_stack = nullptr;
-  /// 协程运行函数
-  std::function<void()> m_cb;
+  char m_stack[0];
 };
 
 }  // namespace sylar

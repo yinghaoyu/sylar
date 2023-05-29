@@ -160,6 +160,7 @@ class HttpConnectionPool {
   uint32_t m_maxAliveTime;  // 每个连接存活的时间
   uint32_t m_maxRequest;    // 每个连接最大请求次数
   bool m_isHttps;           // 是否 https
+  std::string m_service;
 
   MutexType m_mutex;
   std::list<HttpConnection*> m_conns;   // 所有可用连接

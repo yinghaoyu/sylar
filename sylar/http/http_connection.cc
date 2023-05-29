@@ -1,5 +1,6 @@
 #include "http_connection.h"
 #include "http_parser.h"
+#include "sylar/dns.h"
 #include "sylar/log.h"
 #include "sylar/streams/zlib_stream.h"
 
@@ -143,6 +144,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
     }
     parser->getData()->setBody(body);
   }
+  parser->getData()->initConnection();
   return parser->getData();
 }
 
@@ -308,7 +310,9 @@ HttpConnectionPool::HttpConnectionPool(const std::string& host,
       m_maxSize(max_size),
       m_maxAliveTime(max_alive_time),
       m_maxRequest(max_request),
-      m_isHttps(is_https) {}
+      m_isHttps(is_https) {
+  m_service = m_host + ":" + std::to_string(m_port);
+}
 
 HttpConnection::ptr HttpConnectionPool::getConnection(uint64_t& timeout_ms) {
   uint64_t now_ms = sylar::GetCurrentMS();
@@ -318,11 +322,11 @@ HttpConnection::ptr HttpConnectionPool::getConnection(uint64_t& timeout_ms) {
   while (!m_conns.empty()) {
     auto conn = *m_conns.begin();
     m_conns.pop_front();
-    if (!conn->isConnected()) {
+    if ((conn->m_createTime + m_maxAliveTime) < now_ms) {
       invalid_conns.push_back(conn);
       continue;
     }
-    if ((conn->m_createTime + m_maxAliveTime) < now_ms) {
+    if (!conn->checkConnected()) {
       invalid_conns.push_back(conn);
       continue;
     }
@@ -336,12 +340,11 @@ HttpConnection::ptr HttpConnectionPool::getConnection(uint64_t& timeout_ms) {
   m_total -= invalid_conns.size();
 
   if (!ptr) {
-    IPAddress::ptr addr = Address::LookupAnyIPAddress(m_host);
+    auto addr = DnsMgr::GetInstance()->getAddress(m_service, true);
     if (!addr) {
       SYLAR_LOG_ERROR(g_logger) << "get addr fail: " << m_host;
       return nullptr;
     }
-    addr->setPort(m_port);
     Socket::ptr sock =
         m_isHttps ? SSLSocket::CreateTCP(addr) : Socket::CreateTCP(addr);
     if (!sock) {
@@ -365,7 +368,8 @@ HttpConnection::ptr HttpConnectionPool::getConnection(uint64_t& timeout_ms) {
 void HttpConnectionPool::ReleasePtr(HttpConnection* ptr,
                                     HttpConnectionPool* pool) {
   ++ptr->m_request;
-  if (!ptr->isConnected() || pool->m_total > pool->m_maxSize ||
+  if (!ptr->isConnected() || !ptr->checkConnected() ||
+      pool->m_total > pool->m_maxSize ||
       ((ptr->m_createTime + pool->m_maxAliveTime) < sylar::GetCurrentMS()) ||
       (ptr->m_request >= pool->m_maxRequest)) {
     delete ptr;

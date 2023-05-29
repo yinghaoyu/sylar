@@ -352,6 +352,7 @@ class HttpResponse {
   void setCookie(const std::string& key, const std::string& val,
                  time_t expired = 0, const std::string& path = "",
                  const std::string& domain = "", bool secure = false);
+  void initConnection();
 
  private:
   /// 响应状态

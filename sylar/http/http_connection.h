@@ -99,8 +99,8 @@ class HttpConnection : public SocketStream {
   int sendRequest(HttpRequest::ptr req);
 
  private:
-  uint64_t m_createTime = 0;
-  uint64_t m_request = 0;
+  uint64_t m_createTime = 0;  // 创建时间
+  uint64_t m_request = 0;     // 处理请求的次数
 };
 
 class HttpConnectionPool {
@@ -118,6 +118,7 @@ class HttpConnectionPool {
                      uint32_t port, bool is_https, uint32_t max_size,
                      uint32_t max_alive_time, uint32_t max_request);
 
+  // 从 http 连接池中获取一个连接
   HttpConnection::ptr getConnection();
 
   HttpResult::ptr doGet(const std::string& url, uint64_t timeout_ms,
@@ -154,15 +155,15 @@ class HttpConnectionPool {
  private:
   std::string m_host;
   std::string m_vhost;
-  uint32_t m_port;
-  uint32_t m_maxSize;
-  uint32_t m_maxAliveTime;
-  uint32_t m_maxRequest;
-  bool m_isHttps;
+  uint32_t m_port;          // 端口号
+  uint32_t m_maxSize;       // 连接池最大连接数
+  uint32_t m_maxAliveTime;  // 每个连接存活的时间
+  uint32_t m_maxRequest;    // 每个连接最大请求次数
+  bool m_isHttps;           // 是否 https
 
   MutexType m_mutex;
-  std::list<HttpConnection*> m_conns;
-  std::atomic<int32_t> m_total = {0};
+  std::list<HttpConnection*> m_conns;  // 所有可用连接
+  std::atomic<uint32_t> m_total = {0};  // 存活连接数
 };
 
 }  // namespace http

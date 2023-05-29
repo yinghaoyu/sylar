@@ -320,7 +320,7 @@ HttpConnection::ptr HttpConnectionPool::getConnection() {
       invalid_conns.push_back(conn);
       continue;
     }
-    if ((conn->m_createTime + m_maxAliveTime) > now_ms) {
+    if ((conn->m_createTime + m_maxAliveTime) < now_ms) {
       invalid_conns.push_back(conn);
       continue;
     }
@@ -361,8 +361,8 @@ HttpConnection::ptr HttpConnectionPool::getConnection() {
 void HttpConnectionPool::ReleasePtr(HttpConnection* ptr,
                                     HttpConnectionPool* pool) {
   ++ptr->m_request;
-  if (!ptr->isConnected() ||
-      ((ptr->m_createTime + pool->m_maxAliveTime) >= sylar::GetCurrentMS()) ||
+  if (!ptr->isConnected() || pool->m_total > pool->m_maxSize ||
+      ((ptr->m_createTime + pool->m_maxAliveTime) < sylar::GetCurrentMS()) ||
       (ptr->m_request >= pool->m_maxRequest)) {
     delete ptr;
     --pool->m_total;

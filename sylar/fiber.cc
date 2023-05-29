@@ -42,6 +42,8 @@ Fiber::Fiber() {
   if (getcontext(&m_ctx)) {
     SYLAR_ASSERT2(false, "getcontext");
   }
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+  coctx_init(&m_ctx);
 #endif
 
   ++s_fiber_count;
@@ -76,6 +78,14 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
   } else {
     m_ctx = make_fcontext((char*)m_stack + m_stacksize, m_stacksize,
                           &Fiber::CallerMainFunc);
+  }
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+  m_ctx.ss_size = m_stacksize;
+  m_ctx.ss_sp = (char*)m_stack;
+  if (!use_caller) {
+    coctx_make(&m_ctx, &Fiber::MainFunc, 0, 0);
+  } else {
+    coctx_make(&m_ctx, &Fiber::CallerMainFunc, 0, 0);
   }
 #endif
 
@@ -121,6 +131,8 @@ void Fiber::reset(std::function<void()> cb) {
 #elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
   m_ctx = make_fcontext((char*)m_stack + m_stacksize, m_stacksize,
                         &Fiber::MainFunc);
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+  coctx_make(&m_ctx, &Fiber::MainFunc, 0, 0);
 #endif
   m_state = INIT;
 }
@@ -134,6 +146,8 @@ void Fiber::call() {
   }
 #elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
   jump_fcontext(&t_threadFiber->m_ctx, m_ctx, 0);
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+  coctx_swap(&t_threadFiber->m_ctx, &m_ctx);
 #endif
 }
 
@@ -145,6 +159,8 @@ void Fiber::back() {
   }
 #elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
   jump_fcontext(&m_ctx, t_threadFiber->m_ctx, 0);
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+  coctx_swap(&m_ctx, &t_threadFiber->m_ctx);
 #endif
 }
 
@@ -159,6 +175,8 @@ void Fiber::swapIn() {
   }
 #elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
   jump_fcontext(&Scheduler::GetMainFiber()->m_ctx, m_ctx, 0);
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+  coctx_swap(&Scheduler::GetMainFiber()->m_ctx, &m_ctx);
 #endif
 }
 
@@ -171,6 +189,8 @@ void Fiber::swapOut() {
   }
 #elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
   jump_fcontext(&m_ctx, Scheduler::GetMainFiber()->m_ctx, 0);
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+  coctx_swap(&m_ctx, &Scheduler::GetMainFiber()->m_ctx);
 #endif
 }
 
@@ -215,6 +235,8 @@ uint64_t Fiber::TotalFibers() {
 void Fiber::MainFunc() {
 #elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
 void Fiber::MainFunc(intptr_t vp) {
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+void* Fiber::MainFunc(void*, void*) {
 #endif
   Fiber::ptr cur = GetThis();
   SYLAR_ASSERT(cur);
@@ -234,6 +256,8 @@ void Fiber::MainFunc(intptr_t vp) {
 void Fiber::CallerMainFunc() {
 #elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
 void Fiber::CallerMainFunc(intptr_t vp) {
+#elif FIBER_CONTEXT_TYPE == FIBER_LIBCO
+void* Fiber::CallerMainFunc(void*, void*) {
 #endif
   Fiber::ptr cur = GetThis();
   SYLAR_ASSERT(cur);

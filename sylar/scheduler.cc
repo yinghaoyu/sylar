@@ -163,7 +163,7 @@ void Scheduler::run() {
         is_active = true;
         break;
       }
-      tickle_me |= it != m_fibers.end();
+      tickle_me |= !m_fibers.empty();
     }
 
     if (tickle_me) {

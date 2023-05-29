@@ -73,6 +73,9 @@ class WorkerManager {
   uint32_t getCount();
 
  private:
+  void add(const std::string& name, Scheduler::ptr s);
+
+ private:
   std::map<std::string, std::vector<Scheduler::ptr>> m_datas;
   bool m_stop;
 };

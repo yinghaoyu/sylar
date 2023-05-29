@@ -4,6 +4,17 @@
 namespace sylar {
 namespace http {
 
+static const char* GetFiberTypeStr() {
+  if (FIBER_CONTEXT_TYPE == FIBER_UCONTEXT) {
+    return "FIBER_UCONTEXT";
+  } else if (FIBER_CONTEXT_TYPE == FIBER_FCONTEXT) {
+    return "FIBER_FCONTEXT";
+  } else if (FIBER_CONTEXT_TYPE == FIBER_LIBCO) {
+    return "FIBER_LIBCO";
+  }
+  return "UNKNOW";
+}
+
 StatusServlet::StatusServlet() : Servlet("StatusServlet") {}
 
 std::string format_used_time(int64_t ts) {
@@ -72,6 +83,7 @@ int32_t StatusServlet::handle(sylar::http::HttpRequest::ptr request,
                                  ProcessInfoMgr::GetInstance()->main_start_time)
                           << std::endl;
   ss << "===================================================" << std::endl;
+  XX("fiber_type") << GetFiberTypeStr() << std::endl;
   XX("fibers") << sylar::Fiber::TotalFibers() << std::endl;
   ss << "===================================================" << std::endl;
   ss << "<Logger>" << std::endl;

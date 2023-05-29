@@ -181,9 +181,9 @@ class RWMutex : Noncopyable {
 class NullRWMutex : Noncopyable {
  public:
   /// 局部读锁
-  typedef ReadScopedLockImpl<NullMutex> ReadLock;
+  typedef ReadScopedLockImpl<NullRWMutex> ReadLock;
   /// 局部写锁
-  typedef WriteScopedLockImpl<NullMutex> WriteLock;
+  typedef WriteScopedLockImpl<NullRWMutex> WriteLock;
 
   NullRWMutex() {}
 

@@ -1,9 +1,18 @@
 #ifndef __SYLAR_FIBER_H__
 #define __SYLAR_FIBER_H__
 
-#include <ucontext.h>
 #include <functional>
 #include <memory>
+
+#define FIBER_UCONTEXT 1
+#define FIBER_FCONTEXT 2
+#define FIBER_CONTEXT_TYPE FIBER_UCONTEXT
+
+#if FIBER_CONTEXT_TYPE == FIBER_UCONTEXT
+#include <ucontext.h>
+#elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
+#include "sylar/fcontext/fcontext.h"
+#endif
 
 namespace sylar {
 class Scheduler;
@@ -47,8 +56,8 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   // 切换到后台执行
   void swapOut();
 
-  //将当前线程切换到执行状态
-  //执行的为当前线程的主协程
+  // 将当前线程切换到执行状态
+  // 执行的为当前线程的主协程
   void call();
 
   // 将当前线程切换到后台
@@ -76,10 +85,20 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
 
   // 协程执行函数
   // 执行完成返回到线程主协程
+#if FIBER_CONTEXT_TYPE == FIBER_UCONTEXT
   static void MainFunc();
+#elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
+  static void MainFunc(intptr_t vp);
+#endif
+
   // 协程执行函数
   // 执行完成返回到线程调度协程
+#if FIBER_CONTEXT_TYPE == FIBER_UCONTEXT
   static void CallerMainFunc();
+#elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
+  static void CallerMainFunc(intptr_t vp);
+#endif
+
   // 获取当前协程的id
   static uint64_t GetFiberId();
 
@@ -91,7 +110,11 @@ class Fiber : public std::enable_shared_from_this<Fiber> {
   /// 协程状态
   State m_state = INIT;
   /// 协程上下文
+#if FIBER_CONTEXT_TYPE == FIBER_UCONTEXT
   ucontext_t m_ctx;
+#elif FIBER_CONTEXT_TYPE == FIBER_FCONTEXT
+  fcontext_t m_ctx = nullptr;
+#endif
   /// 协程运行栈指针
   void* m_stack = nullptr;
   /// 协程运行函数

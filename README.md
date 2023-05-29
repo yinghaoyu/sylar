@@ -12,7 +12,7 @@
 
 ```bash
 sudo apt update
-sudo apt install mysql-server libmysqlclient-dev libboost-all-dev libssl-dev libjsoncpp-dev zlib1g-dev libsqlite3-dev libtinyxml2-dev protobuf-compiler libprotobuf-dev
+sudo apt install mysql-server libmysqlclient-dev libboost-all-dev libssl-dev libjsoncpp-dev zlib1g-dev libsqlite3-dev libtinyxml2-dev protobuf-compiler libprotobuf-dev libtbb-dev
 git clone https://github.com/vipshop/hiredis-vip.git
 cd hiredis-vip
 make

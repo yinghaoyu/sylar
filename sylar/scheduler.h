@@ -16,7 +16,7 @@ namespace sylar {
 class Scheduler {
  public:
   typedef std::shared_ptr<Scheduler> ptr;
-  typedef Mutex MutexType;
+  typedef Spinlock MutexType;
 
   // threads 线程数量
   // use_caller 是否使用当前调用线程

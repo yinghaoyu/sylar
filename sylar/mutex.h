@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdint.h>
+#include <tbb/spin_rw_mutex.h>
 #include <atomic>
 #include <functional>
 #include <list>
@@ -235,6 +236,30 @@ class CASLock : Noncopyable {
  private:
   /// 原子状态
   volatile std::atomic_flag m_mutex;
+};
+
+// 读写自旋锁
+class RWSpinlock : Noncopyable {
+ public:
+  // 局部读锁
+  typedef ReadScopedLockImpl<RWSpinlock> ReadLock;
+
+  // 局部写锁
+  typedef WriteScopedLockImpl<RWSpinlock> WriteLock;
+
+  RWSpinlock() {}
+
+  ~RWSpinlock() {}
+
+  void rdlock() { m_lock.lock_read(); }
+
+  void wrlock() { m_lock.lock(); }
+
+  void unlock() { m_lock.unlock(); }
+
+ private:
+  /// 读写锁
+  tbb::spin_rw_mutex m_lock;
 };
 
 class Scheduler;

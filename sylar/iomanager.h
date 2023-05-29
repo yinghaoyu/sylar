@@ -21,7 +21,7 @@ class IOManager : public Scheduler, public TimerManager {
  private:
   // Socket事件上线文件类
   struct FdContext {
-    typedef Mutex MutexType;
+    typedef Spinlock MutexType;
     struct EventContext {
       Scheduler* scheduler = nullptr;  // 事件执行的scheduler
       Fiber::ptr fiber;                // 事件协程

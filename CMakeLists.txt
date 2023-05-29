@@ -8,6 +8,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined")
 
+ENABLE_LANGUAGE(ASM)
+
 include_directories(.)
 
 option(BUILD_TEST "ON for complile test" OFF)
@@ -82,6 +84,7 @@ set(LIB_SRC
     sylar/daemon.cc
     sylar/fd_manager.cc
     sylar/fiber.cc
+    sylar/fcontext/fcontext.S
     sylar/http/http.cc
     sylar/http/http_connection.cc
     sylar/http/http_parser.cc
@@ -166,6 +169,7 @@ set(LIBS
         mysqlclient
         zookeeper_mt
         event
+        tbb
         #jemalloc
         ${OPENSSL_LIBRARIES}
         ${PROTOBUF_LIBRARIES}

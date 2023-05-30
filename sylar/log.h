@@ -173,6 +173,8 @@ class LogAppender {
   LogLevel::Level getLevel() const { return m_level; }
   void setLevel(LogLevel::Level val) { m_level = val; }
 
+  virtual bool reopen() { return true; }
+
  protected:
   LogLevel::Level m_level = LogLevel::DEBUG;
   bool m_hasFormatter = false;
@@ -186,7 +188,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
 
  public:
   typedef std::shared_ptr<Logger> ptr;
-  typedef Spinlock MutexType;
+  typedef RWSpinlock RWMutexType;
 
   Logger(const std::string& name = "root");
   void log(LogLevel::Level level, LogEvent::ptr event);
@@ -211,10 +213,12 @@ class Logger : public std::enable_shared_from_this<Logger> {
 
   std::string toYamlString();
 
+  bool reopen();
+
  private:
   std::string m_name;       // 日志名称
   LogLevel::Level m_level;  // 日志级别
-  MutexType m_mutex;
+  RWMutexType m_mutex;
   std::list<LogAppender::ptr> m_appenders;  // Appender集合
   LogFormatter::ptr m_formatter;
   Logger::ptr m_root;
@@ -239,7 +243,7 @@ class FileLogAppender : public LogAppender {
   std::string toYamlString() override;
 
   // 重新打开文件，文件打开成功返回true
-  bool reopen();
+  bool reopen() override;
 
  private:
   std::string m_filename;
@@ -249,7 +253,7 @@ class FileLogAppender : public LogAppender {
 
 class LoggerManager {
  public:
-  typedef Spinlock MutexType;
+  typedef RWSpinlock RWMutexType;
   LoggerManager();
   Logger::ptr getLogger(const std::string& name);
 
@@ -258,8 +262,10 @@ class LoggerManager {
 
   std::string toYamlString();
 
+  bool reopen();
+
  private:
-  MutexType m_mutex;
+  RWMutexType m_mutex;
   std::map<std::string, Logger::ptr> m_loggers;
   Logger::ptr m_root;
 };

@@ -555,6 +555,7 @@ bool RedisServiceDiscovery::queryInfo() {
         services.insert(
             std::string(rpy->element[i]->str, rpy->element[i]->len));
       }
+      services.erase("all");
     }
     for (auto& n : services) {
       auto rpy = sylar::RedisUtil::TryCmd(m_name, 5, "hgetall sylar:%s:%s",

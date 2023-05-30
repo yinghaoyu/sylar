@@ -91,6 +91,12 @@ class HttpConnection : public SocketStream {
   static HttpResult::ptr DoRequest(HttpRequest::ptr req, Uri::ptr uri,
                                    uint64_t timeout_ms);
 
+  static HttpResult::ptr DoRequest(HttpRequest::ptr req, Address::ptr addr,
+                                   bool is_https, uint64_t timeout_ms);
+
+  static HttpResult::ptr DoRequest(HttpRequest::ptr req, Socket::ptr sock,
+                                   uint64_t timeout_ms);
+
   HttpConnection(Socket::ptr sock, bool owner = true);
 
   ~HttpConnection();

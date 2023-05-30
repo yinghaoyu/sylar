@@ -21,6 +21,7 @@
 #include "sylar/util/crypto_util.h"
 #include "sylar/util/hash_util.h"
 #include "sylar/util/json_util.h"
+#include "sylar/util/trace.h"
 
 namespace sylar {
 

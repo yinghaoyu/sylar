@@ -475,6 +475,8 @@ void SDLoadBalance::refresh() {
     return;
   }
 
+  m_isRefresh = true;
+
   RWMutexType::ReadLock lock(m_mutex);
   auto datas = m_datas;
   lock.unlock();
@@ -484,6 +486,7 @@ void SDLoadBalance::refresh() {
       n.second->checkInit();
     }
   }
+  m_isRefresh = false;
 }
 
 void SDLoadBalance::initConf(

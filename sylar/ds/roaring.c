@@ -7794,8 +7794,8 @@ void roaring_bitmap_add_range_closed(roaring_bitmap_t *ra, uint32_t min, uint32_
     for (uint32_t key = max_key; key != min_key-1; key--) { // beware of min_key==0
         uint32_t container_min = (min_key == key) ? (min & 0xffff) : 0;
         uint32_t container_max = (max_key == key) ? (max & 0xffff) : 0xffff;
-        void* new_container;
-        uint8_t new_type;
+        void* new_container = NULL;
+        uint8_t new_type = 0;
 
         if (src >= 0 && ra->high_low_container.keys[src] == key) {
             ra_unshare_container_at_index(&ra->high_low_container, src);

@@ -15,7 +15,8 @@ static sylar::ConfigVar<uint32_t>::ptr g_rock_protocol_max_length =
                           "rock protocol max length");
 
 static sylar::ConfigVar<uint32_t>::ptr g_rock_protocol_gzip_min_length =
-    sylar::Config::Lookup("rock.protocol.gzip_min_length", (uint32_t)(1024 * 4),
+    sylar::Config::Lookup("rock.protocol.gzip_min_length",
+                          (uint32_t)(1024 * 1024 * 4),
                           "rock protocol gizp min length");
 
 bool RockBody::serializeToByteArray(ByteArray::ptr bytearray) {

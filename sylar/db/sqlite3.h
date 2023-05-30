@@ -62,7 +62,7 @@ class SQLite3 : public IDB, public std::enable_shared_from_this<SQLite3> {
 
   sqlite3* getDB() const { return m_db; }
 
- private:
+ protected:
   SQLite3(sqlite3* db);
 
  private:

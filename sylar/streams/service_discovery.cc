@@ -41,7 +41,7 @@ ServiceItemInfo::ptr ServiceItemInfo::Create(const std::string& ip_and_port,
     return nullptr;
   }
 
-  ServiceItemInfo::ptr rt(new ServiceItemInfo);
+  ServiceItemInfo::ptr rt = std::make_shared<ServiceItemInfo>();
   rt->m_id = ((uint64_t)ip_addr << 32) | port;
   rt->m_ip = ip;
   rt->m_port = port;
@@ -188,7 +188,7 @@ void ZKServiceDiscovery::start() {
     return;
   }
   auto self = shared_from_this();
-  m_client.reset(new sylar::ZKClient);
+  m_client = std::make_shared<sylar::ZKClient>();
   bool b =
       m_client->init(m_hosts, 6000,
                      std::bind(&ZKServiceDiscovery::onWatch, self,

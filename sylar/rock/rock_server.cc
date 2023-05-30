@@ -15,7 +15,8 @@ RockServer::RockServer(const std::string& type, sylar::IOManager* worker,
 
 void RockServer::handleClient(Socket::ptr client) {
   SYLAR_LOG_DEBUG(g_logger) << "handleClient " << *client;
-  sylar::RockSession::ptr session(new sylar::RockSession(client));
+  sylar::RockSession::ptr session =
+      std::make_shared<sylar::RockSession>(client);
   session->setWorker(m_worker);
   ModuleMgr::GetInstance()->foreach (
       Module::ROCK, [session](Module::ptr m) { m->onConnect(session); });

@@ -15,7 +15,7 @@ T& GetInstanceX() {
 
 template <class T, class X, int N>
 std::shared_ptr<T> GetInstancePtr() {
-  static std::shared_ptr<T> v(new T);
+  static std::shared_ptr<T> v = std::make_shared<T>();
   return v;
 }
 
@@ -36,7 +36,7 @@ class SingletonPtr {
  public:
   static std::shared_ptr<T> GetInstance() {
     // return GetInstancePtr<T, X, N>();
-    static std::shared_ptr<T> v(new T);
+    static std::shared_ptr<T> v = std::make_shared<T>();
     return v;
   }
 };

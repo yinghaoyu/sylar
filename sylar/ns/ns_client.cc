@@ -8,7 +8,7 @@ namespace ns {
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 NSClient::NSClient() {
-  m_domains.reset(new sylar::ns::NSDomainSet);
+  m_domains = std::make_shared<sylar::ns::NSDomainSet>();
 }
 
 NSClient::~NSClient() {
@@ -74,7 +74,7 @@ RockResult::ptr NSClient::query() {
       break;
     }
 
-    NSDomainSet::ptr domains(new NSDomainSet);
+    NSDomainSet::ptr domains = std::make_shared<NSDomainSet>();
     for (auto& i : rsp->infos()) {
       if (!hasQueryDomain(i.domain())) {
         continue;
@@ -83,7 +83,8 @@ RockResult::ptr NSClient::query() {
       uint32_t cmd = i.cmd();
 
       for (auto& n : i.nodes()) {
-        NSNode::ptr node(new NSNode(n.ip(), n.port(), n.weight()));
+        NSNode::ptr node =
+            std::make_shared<NSNode>(n.ip(), n.port(), n.weight());
         if (!(node->getId() >> 32)) {
           SYLAR_LOG_ERROR(g_logger) << "invalid node: " << node->toString();
           continue;
@@ -166,7 +167,8 @@ bool NSClient::onNotify(sylar::RockNotify::ptr nty,
         }
         int cmd = i.cmd();
         for (auto& n : i.nodes()) {
-          NSNode::ptr node(new NSNode(n.ip(), n.port(), n.weight()));
+          NSNode::ptr node =
+              std::make_shared<NSNode>(n.ip(), n.port(), n.weight());
           domain->del(cmd, node->getId());
         }
       }
@@ -178,7 +180,8 @@ bool NSClient::onNotify(sylar::RockNotify::ptr nty,
         auto domain = m_domains->get(i.domain(), true);
         int cmd = i.cmd();
         for (auto& n : i.nodes()) {
-          NSNode::ptr node(new NSNode(n.ip(), n.port(), n.weight()));
+          NSNode::ptr node =
+              std::make_shared<NSNode>(n.ip(), n.port(), n.weight());
           if (node->getId() >> 32) {
             domain->add(cmd, node);
           } else {

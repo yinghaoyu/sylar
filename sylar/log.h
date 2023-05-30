@@ -15,12 +15,12 @@
 #include "thread.h"
 #include "util.h"
 
-#define SYLAR_LOG_LEVEL(logger, level)                                \
-  if (logger->getLevel() <= level)                                    \
-  sylar::LogEventWrap(                                                \
-      sylar::LogEvent::ptr(new sylar::LogEvent(                       \
-          logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
-          sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
+#define SYLAR_LOG_LEVEL(logger, level)                                        \
+  if (logger->getLevel() <= level)                                            \
+  sylar::LogEventWrap(std::make_shared<sylar::LogEvent>(                      \
+                          logger, level, __FILE__, __LINE__, 0,               \
+                          sylar::GetThreadId(), sylar::GetFiberId(), time(0), \
+                          sylar::Thread::GetName()))                          \
       .getSS()
 
 #define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::DEBUG)
@@ -29,13 +29,13 @@
 #define SYLAR_LOG_ERROR(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::ERROR)
 #define SYLAR_LOG_FATAL(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::FATAL)
 
-#define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                  \
-  if (logger->getLevel() <= level)                                    \
-  sylar::LogEventWrap(                                                \
-      sylar::LogEvent::ptr(new sylar::LogEvent(                       \
-          logger, level, __FILE__, __LINE__, 0, sylar::GetThreadId(), \
-          sylar::GetFiberId(), time(0), sylar::Thread::GetName())))   \
-      .getEvent()                                                     \
+#define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                          \
+  if (logger->getLevel() <= level)                                            \
+  sylar::LogEventWrap(std::make_shared<sylar::LogEvent>(                      \
+                          logger, level, __FILE__, __LINE__, 0,               \
+                          sylar::GetThreadId(), sylar::GetFiberId(), time(0), \
+                          sylar::Thread::GetName()))                          \
+      .getEvent()                                                             \
       ->format(fmt, __VA_ARGS__)
 
 #define SYLAR_LOG_FMT_DEBUG(logger, fmt, ...) \

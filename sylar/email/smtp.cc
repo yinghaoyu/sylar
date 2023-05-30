@@ -30,7 +30,7 @@ SmtpClient::ptr SmtpClient::Create(const std::string& host, uint32_t port,
   std::string buf;
   buf.resize(1024);
 
-  SmtpClient::ptr rt(new SmtpClient(sock));
+  SmtpClient::ptr rt = sylar::protected_make_shared<SmtpClient>(sock);
   int len = rt->read(&buf[0], buf.size());
   if (len <= 0) {
     return nullptr;

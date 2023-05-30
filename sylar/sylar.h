@@ -6,8 +6,14 @@
 #include "db/redis.h"
 #include "db/sqlite3.h"
 
+#include "ds/bitmap.h"
+#include "ds/blocking_queue.h"
 #include "ds/cache_status.h"
+#include "ds/dict.h"
+#include "ds/hash_map.h"
+#include "ds/hash_multimap.h"
 #include "ds/lru_cache.h"
+#include "ds/roaring_bitmap.h"
 #include "ds/timed_cache.h"
 #include "ds/timed_lru_cache.h"
 

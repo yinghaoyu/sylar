@@ -383,11 +383,11 @@ ILoadBalance::Type SDLoadBalance::getType(const std::string& domain,
 
 LoadBalance::ptr SDLoadBalance::createLoadBalance(ILoadBalance::Type type) {
   if (type == ILoadBalance::ROUNDROBIN) {
-    return RoundRobinLoadBalance::ptr(new RoundRobinLoadBalance);
+    return std::make_shared<RoundRobinLoadBalance>();
   } else if (type == ILoadBalance::WEIGHT) {
-    return WeightLoadBalance::ptr(new WeightLoadBalance);
+    return std::make_shared<WeightLoadBalance>();
   } else if (type == ILoadBalance::FAIR) {
-    return WeightLoadBalance::ptr(new WeightLoadBalance);
+    return std::make_shared<WeightLoadBalance>();
   }
   return nullptr;
 }
@@ -396,11 +396,11 @@ LoadBalanceItem::ptr SDLoadBalance::createLoadBalanceItem(
     ILoadBalance::Type type) {
   LoadBalanceItem::ptr item;
   if (type == ILoadBalance::ROUNDROBIN) {
-    item.reset(new LoadBalanceItem);
+    item = std::make_shared<LoadBalanceItem>();
   } else if (type == ILoadBalance::WEIGHT) {
-    item.reset(new LoadBalanceItem);
+    item = std::make_shared<LoadBalanceItem>();
   } else if (type == ILoadBalance::FAIR) {
-    item.reset(new FairLoadBalanceItem);
+    item = std::make_shared<FairLoadBalanceItem>();
   }
   return item;
 }

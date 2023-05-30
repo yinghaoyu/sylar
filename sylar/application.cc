@@ -140,7 +140,7 @@ int Application::main(int argc, char** argv) {
     ofs << getpid();
   }
 
-  m_mainIOManager.reset(new sylar::IOManager(1, true, "main"));
+  m_mainIOManager = std::make_shared<sylar::IOManager>(1, true, "main");
   m_mainIOManager->schedule(std::bind(&Application::run_fiber, this));
   m_mainIOManager->addTimer(
       2000,
@@ -186,7 +186,7 @@ int Application::run_fiber() {
       size_t pos = a.find(":");
       if (pos == std::string::npos) {
         // SYLAR_LOG_ERROR(g_logger) << "invalid address: " << a;
-        address.push_back(UnixAddress::ptr(new UnixAddress(a)));
+        address.push_back(std::make_shared<UnixAddress>(a));
         continue;
       }
       int32_t port = atoi(a.substr(pos + 1).c_str());
@@ -251,17 +251,17 @@ int Application::run_fiber() {
 
     TcpServer::ptr server;
     if (i.type == "http") {
-      server.reset(new sylar::http::HttpServer(i.keepalive, process_worker,
-                                               io_worker, accept_worker));
+      server = std::make_shared<sylar::http::HttpServer>(
+          i.keepalive, process_worker, io_worker, accept_worker);
     } else if (i.type == "ws") {
-      server.reset(
-          new sylar::http::WSServer(process_worker, io_worker, accept_worker));
+      server = std::make_shared<sylar::http::WSServer>(
+          process_worker, io_worker, accept_worker);
     } else if (i.type == "rock") {
-      server.reset(new sylar::RockServer("rock", process_worker, io_worker,
-                                         accept_worker));
+      server = std::make_shared<sylar::RockServer>("rock", process_worker,
+                                                   io_worker, accept_worker);
     } else if (i.type == "nameserver") {
-      server.reset(new sylar::RockServer("nameserver", process_worker,
-                                         io_worker, accept_worker));
+      server = std::make_shared<sylar::RockServer>("nameserver", process_worker,
+                                                   io_worker, accept_worker);
       ModuleMgr::GetInstance()->add(
           std::make_shared<sylar::ns::NameServerModule>());
     } else {
@@ -293,14 +293,16 @@ int Application::run_fiber() {
   }
 
   if (!g_service_discovery_zk->getValue().empty()) {
-    m_serviceDiscovery.reset(
-        new ZKServiceDiscovery(g_service_discovery_zk->getValue()));
-    m_rockSDLoadBalance.reset(new RockSDLoadBalance(m_serviceDiscovery));
+    m_serviceDiscovery = std::make_shared<ZKServiceDiscovery>(
+        g_service_discovery_zk->getValue());
+    m_rockSDLoadBalance =
+        std::make_shared<RockSDLoadBalance>(m_serviceDiscovery);
 
   } else if (!g_service_discovery_redis->getValue().empty()) {
-    m_serviceDiscovery.reset(
-        new RedisServiceDiscovery(g_service_discovery_redis->getValue()));
-    m_rockSDLoadBalance.reset(new RockSDLoadBalance(m_serviceDiscovery));
+    m_serviceDiscovery = std::make_shared<RedisServiceDiscovery>(
+        g_service_discovery_redis->getValue());
+    m_rockSDLoadBalance =
+        std::make_shared<RockSDLoadBalance>(m_serviceDiscovery);
   }
 
   for (auto& i : modules) {

@@ -110,7 +110,8 @@ bool NameServerModule::handleRegister(sylar::RockRequest::ptr request,
     XX(node, port);
     XX(node, weight);
 
-    NSNode::ptr ns_node(new NSNode(node.ip(), node.port(), node.weight()));
+    NSNode::ptr ns_node =
+        std::make_shared<NSNode>(node.ip(), node.port(), node.weight());
     if (!(ns_node->getId() >> 32)) {
       SYLAR_LOG_ERROR(g_logger) << "invalid register request from: "
                                 << stream->getRemoteAddressString()
@@ -142,7 +143,7 @@ bool NameServerModule::handleRegister(sylar::RockRequest::ptr request,
         return false;
       }
     } else {
-      new_value.reset(new NSClientInfo);
+      new_value = std::make_shared<NSClientInfo>();
       new_value->m_node = ns_node;
     }
     for (auto& cmd : info.cmds()) {
@@ -235,7 +236,7 @@ void NameServerModule::set(sylar::RockStream::ptr rs,
   for (auto& i : news) {
     auto d = m_domains->get(i.first);
     if (!d) {
-      d.reset(new NSDomain(i.first));
+      d = std::make_shared<NSDomain>(i.first);
       m_domains->add(d);
     }
     for (auto& c : i.second) {
@@ -256,7 +257,7 @@ void NameServerModule::set(sylar::RockStream::ptr rs,
       for (auto& i : comms) {
         auto d = m_domains->get(i.first);
         if (!d) {
-          d.reset(new NSDomain(i.first));
+          d = std::make_shared<NSDomain>(i.first);
           m_domains->add(d);
         }
         for (auto& c : i.second) {
@@ -297,7 +298,7 @@ std::set<sylar::RockStream::ptr> NameServerModule::getStreams(
 
 void NameServerModule::doNotify(std::set<std::string>& domains,
                                 std::shared_ptr<NotifyMessage> nty) {
-  RockNotify::ptr notify(new RockNotify());
+  RockNotify::ptr notify = std::make_shared<RockNotify>();
   notify->setNotify((int)NSNotify::NODE_CHANGE);
   notify->setAsPB(*nty);
   for (auto& i : domains) {

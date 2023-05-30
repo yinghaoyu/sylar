@@ -103,7 +103,7 @@ static ssize_t do_io(int fd, OriginFun fun, const char* hook_fun_name,
 
   uint64_t to = ctx->getTimeout(timeout_so);
   // 超时条件
-  std::shared_ptr<timer_info> tinfo(new timer_info);
+  std::shared_ptr<timer_info> tinfo = std::make_shared<timer_info>();
 
 retry:
   ssize_t n = fun(fd, std::forward<Args>(args)...);
@@ -266,7 +266,7 @@ int connect_with_timeout(int fd, const struct sockaddr* addr, socklen_t addrlen,
   // 表示连接请求正在进行中...
   sylar::IOManager* iom = sylar::IOManager::GetThis();
   sylar::Timer::ptr timer;
-  std::shared_ptr<timer_info> tinfo(new timer_info);
+  std::shared_ptr<timer_info> tinfo = std::make_shared<timer_info>();
   std::weak_ptr<timer_info> winfo(tinfo);
 
   if (timeout_ms != (uint64_t)-1) {

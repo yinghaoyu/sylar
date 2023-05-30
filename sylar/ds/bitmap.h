@@ -130,6 +130,8 @@ class Bitmap {
   bool normalCross(const Bitmap& b) const;
   // uncompress to compress
   bool compressCross(const Bitmap& b) const;
+
+ protected:
   Bitmap();
 
  private:

@@ -75,7 +75,7 @@ class ServletCreator : public IServletCreator {
 
   ServletCreator() {}
 
-  Servlet::ptr get() const override { return Servlet::ptr(new T); }
+  Servlet::ptr get() const override { return std::make_shared<T>(); }
 
   std::string getName() const override { return TypeToName<T>(); }
 };

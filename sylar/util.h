@@ -181,6 +181,14 @@ void delete_array(T* v) {
   }
 }
 
+template <class T, class... Args>
+inline std::shared_ptr<T> protected_make_shared(Args&&... args) {
+  struct Helper : T {
+    Helper(Args&&... args) : T(std::forward<Args>(args)...) {}
+  };
+  return std::make_shared<Helper>(std::forward<Args>(args)...);
+}
+
 template <class T>
 class SharedArray {
  public:

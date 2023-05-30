@@ -103,7 +103,7 @@ static bool check_service_alive(sylar::Address::ptr addr) {
 
 void Dns::set(const std::set<std::string>& addrs) {
   {
-    sylar::RWMutex::WriteLock lock(m_mutex);
+    RWMutexType::WriteLock lock(m_mutex);
     m_addrs = addrs;
   }
   init();
@@ -115,7 +115,7 @@ void Dns::init() {
     return;
   }
 
-  sylar::RWMutex::ReadLock lock2(m_mutex);
+  RWMutexType::ReadLock lock2(m_mutex);
   auto addrs = m_addrs;
   lock2.unlock();
 
@@ -134,7 +134,7 @@ void Dns::init() {
     address[i].valid = check_service_alive(result[i]);
   }
 
-  sylar::RWMutex::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   m_address.swap(address);
 }
 
@@ -142,7 +142,7 @@ sylar::Address::ptr Dns::get(uint32_t seed) {
   if (seed == (uint32_t)-1) {
     seed = sylar::Atomic::addFetch(m_idx);
   }
-  sylar::RWMutex::ReadLock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   for (size_t i = 0; i < m_address.size(); ++i) {
     auto info = m_address[(seed + i) % m_address.size()];
     if (info.valid) {
@@ -155,7 +155,7 @@ sylar::Address::ptr Dns::get(uint32_t seed) {
 std::string Dns::toString() {
   std::stringstream ss;
   ss << "[Dns domain=" << m_domain << " type=" << m_type << " idx=" << m_idx;
-  sylar::RWMutex::ReadLock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   ss << " addrs.size=" << m_address.size() << " addrs=[";
   for (size_t i = 0; i < m_address.size(); ++i) {
     if (i) {
@@ -181,7 +181,7 @@ void Dns::refresh() {
       address[i].addr = result[i];
       address[i].valid = check_service_alive(result[i]);
     }
-    sylar::RWMutex::WriteLock lock(m_mutex);
+    RWMutexType::WriteLock lock(m_mutex);
     m_address.swap(address);
   } else {
     init();
@@ -189,12 +189,12 @@ void Dns::refresh() {
 }
 
 void DnsManager::add(Dns::ptr v) {
-  sylar::RWMutex::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   m_dns[v->getDomain()] = v;
 }
 
 Dns::ptr DnsManager::get(const std::string& domain) {
-  sylar::RWMutex::WriteLock lock(m_mutex);
+  RWMutexType::WriteLock lock(m_mutex);
   auto it = m_dns.find(domain);
   return it == m_dns.end() ? nullptr : it->second;
 }
@@ -223,7 +223,7 @@ void DnsManager::init() {
     return;
   }
   m_refresh = true;
-  sylar::RWMutex::ReadLock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   std::map<std::string, Dns::ptr> dns = m_dns;
   lock.unlock();
   for (auto& i : dns) {
@@ -242,7 +242,7 @@ void DnsManager::start() {
 }
 
 std::ostream& DnsManager::dump(std::ostream& os) {
-  sylar::RWMutex::ReadLock lock(m_mutex);
+  RWMutexType::ReadLock lock(m_mutex);
   os << "[DnsManager has_timer=" << (m_timer != nullptr)
      << " last_update_time=" << sylar::Time2Str(m_lastUpdateTime)
      << " dns.size=" << m_dns.size() << "]" << std::endl;

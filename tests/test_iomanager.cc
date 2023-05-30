@@ -8,7 +8,7 @@
 #include "sylar/iomanager.h"
 #include "sylar/sylar.h"
 
-sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
+static sylar::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
 int sock = 0;
 

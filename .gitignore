@@ -6,6 +6,7 @@
 /tests/*.txt
 /.cache/
 *.rl.cc
+*.pb.cc
 *.dat
 *.data
 *.db

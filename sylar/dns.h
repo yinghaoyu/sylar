@@ -41,7 +41,7 @@ class Dns {
     uint32_t pool_size = 0;
 
     bool isValid();
-    bool checkValid();
+    bool checkValid(uint32_t timeout_ms);
 
     void push(Socket* sock);
     Socket::ptr pop();

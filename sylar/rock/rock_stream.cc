@@ -1,4 +1,5 @@
 #include "rock_stream.h"
+#include <memory>
 #include "sylar/config.h"
 #include "sylar/log.h"
 #include "sylar/worker.h"
@@ -41,7 +42,7 @@ RockStream::~RockStream() {
 
 int32_t RockStream::sendMessage(Message::ptr msg) {
   if (isConnected()) {
-    RockSendCtx::ptr ctx = std::shared_ptr<RockSendCtx>();
+    RockSendCtx::ptr ctx = std::make_shared<RockSendCtx>();
     ctx->msg = msg;
     enqueue(ctx);
     return 1;

@@ -1,5 +1,4 @@
 #include "rock_stream.h"
-#include <memory>
 #include "sylar/config.h"
 #include "sylar/log.h"
 #include "sylar/worker.h"
@@ -22,7 +21,8 @@ static sylar::ConfigVar<std::unordered_map<
 
 std::string RockResult::toString() const {
   std::stringstream ss;
-  ss << "[RockResult result=" << result << " used=" << used
+  ss << "[RockResult result=" << result << " result_str=" << resultStr
+     << " used=" << used
      << " response=" << (response ? response->toString() : "null")
      << " request=" << (request ? request->toString() : "null")
      << " server=" << server << "]";
@@ -54,6 +54,9 @@ int32_t RockStream::sendMessage(Message::ptr msg) {
 
 RockResult::ptr RockStream::request(RockRequest::ptr req, uint32_t timeout_ms) {
   if (isConnected()) {
+    if (req->getSn() == 0) {
+      req->setSn(sylar::Atomic::addFetch(m_sn));
+    }
     RockCtx::ptr ctx = std::make_shared<RockCtx>();
     ctx->request = req;
     ctx->sn = req->getSn();
@@ -66,13 +69,15 @@ RockResult::ptr RockStream::request(RockRequest::ptr req, uint32_t timeout_ms) {
         timeout_ms, std::bind(&RockStream::onTimeOut, shared_from_this(), ctx));
     enqueue(ctx);
     sylar::Fiber::YieldToHold();
-    auto rt = std::make_shared<RockResult>(
-        ctx->result, sylar::GetCurrentMS() - ts, ctx->response, req);
+    auto rt = std::make_shared<RockResult>(ctx->result, ctx->resultStr,
+                                           sylar::GetCurrentMS() - ts,
+                                           ctx->response, req);
     rt->server = getRemoteAddressString();
     return rt;
   } else {
-    auto rt = std::make_shared<RockResult>(AsyncSocketStream::NOT_CONNECT, 0,
-                                           nullptr, req);
+    auto rt = std::make_shared<RockResult>(
+        AsyncSocketStream::NOT_CONNECT,
+        "not_connect " + getRemoteAddressString(), 0, nullptr, req);
     rt->server = getRemoteAddressString();
     return rt;
   }
@@ -111,6 +116,7 @@ AsyncSocketStream::Ctx::ptr RockStream::doRecv() {
       return nullptr;
     }
     ctx->result = rsp->getResult();
+    ctx->resultStr = rsp->getResultStr();
     ctx->response = rsp;
     return ctx;
   } else if (type == Message::REQUEST) {
@@ -187,6 +193,7 @@ RockSDLoadBalance::RockSDLoadBalance(IServiceDiscovery::ptr sd)
     : SDLoadBalance(sd) {}
 
 static SocketStream::ptr create_rock_stream(ServiceItemInfo::ptr info) {
+  // SYLAR_LOG_INFO(g_logger) << "create_rock_stream: " << info->toString();
   sylar::IPAddress::ptr addr =
       sylar::Address::LookupAnyIPAddress(info->getIp());
   if (!addr) {
@@ -228,13 +235,13 @@ RockResult::ptr RockSDLoadBalance::request(const std::string& domain,
                                            uint32_t timeout_ms, uint64_t idx) {
   auto lb = get(domain, service);
   if (!lb) {
-    return std::make_shared<RockResult>(ILoadBalance::NO_SERVICE, 0, nullptr,
-                                        req);
+    return std::make_shared<RockResult>(ILoadBalance::NO_SERVICE, "no_service",
+                                        0, nullptr, req);
   }
   auto conn = lb->get(idx);
   if (!conn) {
-    return std::make_shared<RockResult>(ILoadBalance::NO_CONNECTION, 0, nullptr,
-                                        req);
+    return std::make_shared<RockResult>(ILoadBalance::NO_CONNECTION,
+                                        "no_connection", 0, nullptr, req);
   }
   uint64_t ts = sylar::GetCurrentMS();
   auto& stats = conn->get(ts / 1000);

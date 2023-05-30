@@ -83,7 +83,7 @@ class ServletCreator : public IServletCreator {
 class ServletDispatch : public Servlet {
  public:
   typedef std::shared_ptr<ServletDispatch> ptr;
-  typedef RWMutex RWMutexType;
+  typedef RWSpinlock RWMutexType;
 
   ServletDispatch();
   virtual int32_t handle(sylar::http::HttpRequest::ptr request,

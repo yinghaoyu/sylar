@@ -25,6 +25,7 @@ void AsyncSocketStream::Ctx::doRsp() {
 
   if (timed) {
     result = TIMEOUT;
+    resultStr = "timeout";
   }
   scd->schedule(&fiber);
 }
@@ -210,6 +211,7 @@ bool AsyncSocketStream::innerClose() {
   }
   for (auto& i : ctxs) {
     i.second->result = IO_ERROR;
+    i.second->resultStr = "io_error";
     i.second->doRsp();
   }
   return true;

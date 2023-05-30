@@ -155,7 +155,6 @@ void RoundRobinLoadBalance::initNolock() {
 }
 
 LoadBalanceItem::ptr RoundRobinLoadBalance::get(uint64_t v) {
-  checkInit();
   RWMutexType::ReadLock lock(m_mutex);
   if (m_items.empty()) {
     return nullptr;
@@ -179,7 +178,6 @@ FairLoadBalanceItem::ptr WeightLoadBalance::getAsFair() {
 }
 
 LoadBalanceItem::ptr WeightLoadBalance::get(uint64_t v) {
-  checkInit();
   RWMutexType::ReadLock lock(m_mutex);
   int32_t idx = getIdx(v);
   if (idx == -1) {
@@ -334,7 +332,11 @@ HolderStats& LoadBalanceItem::get(const uint32_t& now) {
 //     return std::distance(it, m_weights.begin());
 // }
 
-SDLoadBalance::SDLoadBalance(IServiceDiscovery::ptr sd) : m_sd(sd) {}
+SDLoadBalance::SDLoadBalance(IServiceDiscovery::ptr sd) : m_sd(sd) {
+  m_sd->setServiceCallback(std::bind(
+      &SDLoadBalance::onServiceChange, this, std::placeholders::_1,
+      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+}
 
 LoadBalance::ptr SDLoadBalance::get(const std::string& domain,
                                     const std::string& service,
@@ -451,14 +453,37 @@ void SDLoadBalance::onServiceChange(
 }
 
 void SDLoadBalance::start() {
-  m_sd->setServiceCallback(std::bind(
-      &SDLoadBalance::onServiceChange, this, std::placeholders::_1,
-      std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+  if (m_timer) {
+    return;
+  }
+  m_timer = sylar::IOManager::GetThis()->addTimer(
+      500, std::bind(&SDLoadBalance::refresh, this), true);
   m_sd->start();
 }
 
 void SDLoadBalance::stop() {
+  if (!m_timer) {
+    return;
+  }
+  m_timer->cancel();
+  m_timer = nullptr;
   m_sd->stop();
+}
+
+void SDLoadBalance::refresh() {
+  if (m_isRefresh) {
+    return;
+  }
+
+  RWMutexType::ReadLock lock(m_mutex);
+  auto datas = m_datas;
+  lock.unlock();
+
+  for (auto& i : datas) {
+    for (auto& n : i.second) {
+      n.second->checkInit();
+    }
+  }
 }
 
 void SDLoadBalance::initConf(

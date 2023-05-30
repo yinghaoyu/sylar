@@ -127,9 +127,10 @@ class LoadBalance : public ILoadBalance {
 
   std::string statusString(const std::string& prefix);
 
+  void checkInit();
+
  protected:
   virtual void initNolock() = 0;
-  void checkInit();
 
  protected:
   RWMutexType m_mutex;
@@ -231,6 +232,9 @@ class SDLoadBalance {
   LoadBalance::ptr createLoadBalance(ILoadBalance::Type type);
   LoadBalanceItem::ptr createLoadBalanceItem(ILoadBalance::Type type);
 
+ private:
+  void refresh();
+
  protected:
   RWMutexType m_mutex;
   IServiceDiscovery::ptr m_sd;
@@ -243,6 +247,9 @@ class SDLoadBalance {
       m_types;
   ILoadBalance::Type m_defaultType = ILoadBalance::FAIR;
   stream_callback m_cb;
+
+  sylar::Timer::ptr m_timer;
+  bool m_isRefresh = false;
 };
 
 }  // namespace sylar

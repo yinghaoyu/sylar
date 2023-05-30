@@ -5,6 +5,7 @@
 #include "rock_protocol.h"
 #include "sylar/streams/async_socket_stream.h"
 #include "sylar/streams/load_balance.h"
+#include "sylar/singleton.h"
 
 namespace sylar {
 

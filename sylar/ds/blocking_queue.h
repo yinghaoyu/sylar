@@ -11,9 +11,10 @@ class BlockingQueue {
  public:
   typedef std::shared_ptr<BlockingQueue> ptr;
   typedef std::shared_ptr<T> data_type;
+  typedef sylar::Spinlock MutexType;
 
   size_t push(const data_type& data) {
-    sylar::Mutex::Lock lock(m_mutex);
+    MutexType::Lock lock(m_mutex);
     m_datas.push_back(data);
     size_t size = m_datas.size();
     m_sem.notify();  // wait morphing saves us
@@ -22,7 +23,7 @@ class BlockingQueue {
   }
 
   data_type pop() {
-    sylar::Mutex::Lock lock(m_mutex);
+    MutexType::Lock lock(m_mutex);
     // always use a while-loop, due to spurious wakeup
     while (m_datas.empty()) {
       m_sem.wait();
@@ -34,18 +35,18 @@ class BlockingQueue {
   }
 
   size_t size() {
-    sylar::Mutex::Lock lock(m_mutex);
+    MutexType::Lock lock(m_mutex);
     return m_datas.size();
   }
 
   bool empty() {
-    sylar::Mutex::Lock lock(m_mutex);
+    MutexType::Lock lock(m_mutex);
     return m_datas.empty();
   }
 
  private:
   sylar::FiberSemaphore m_sem;
-  sylar::Mutex m_mutex;
+  MutexType m_mutex;
   std::list<data_type> m_datas;
 };
 

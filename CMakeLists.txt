@@ -152,6 +152,7 @@ ragelmaker(sylar/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/s
 ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
 
 protobufmaker(sylar/ns/ns_protobuf.proto LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR})
+protobufmaker(sylar/proto/logserver.proto LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS ${LIB_SRC})
 add_library(sylar SHARED ${LIB_SRC})

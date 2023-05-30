@@ -65,6 +65,8 @@ class Module {
   void addRegisterParam(const std::string& key, const std::string& val);
   void queryService(const std::string& domain, const std::string& service);
 
+  static std::string GetServiceIPPort(const std::string& server_type);
+
  protected:
   std::string getServiceIPPort(const std::string& server_type);
 

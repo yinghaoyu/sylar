@@ -199,8 +199,12 @@ class WeightLoadBalance : public LoadBalance {
 class SDLoadBalance {
  public:
   typedef std::shared_ptr<SDLoadBalance> ptr;
-  typedef std::function<SocketStream::ptr(ServiceItemInfo::ptr)>
+
+  typedef std::function<SocketStream::ptr(const std::string& domain,
+                                          const std::string& service,
+                                          ServiceItemInfo::ptr)>
       stream_callback;
+
   typedef sylar::RWSpinlock RWMutexType;
 
   SDLoadBalance(IServiceDiscovery::ptr sd);

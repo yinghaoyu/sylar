@@ -233,6 +233,21 @@ class StdoutLogAppender : public LogAppender {
   std::string toYamlString() override;
 };
 
+class LoadBalance;
+class LogserverAppender : public LogAppender {
+ public:
+  typedef std::shared_ptr<LogserverAppender> ptr;
+  LogserverAppender(const std::string& topic);
+  void log(Logger::ptr logger, LogLevel::Level level,
+           LogEvent::ptr event) override;
+  std::string toYamlString() override;
+
+ private:
+  std::shared_ptr<LoadBalance> m_lb;
+  std::string m_topic;
+  std::string m_key;
+};
+
 // 定义输出到文件的Appender
 class FileLogAppender : public LogAppender {
  public:

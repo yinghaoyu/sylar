@@ -1,6 +1,8 @@
 #include "rock_stream.h"
 #include "sylar/config.h"
 #include "sylar/log.h"
+#include "sylar/module.h"
+#include "sylar/proto/logserver.pb.h"
 #include "sylar/worker.h"
 
 namespace sylar {
@@ -192,7 +194,9 @@ bool RockConnection::connect(sylar::Address::ptr addr) {
 RockSDLoadBalance::RockSDLoadBalance(IServiceDiscovery::ptr sd)
     : SDLoadBalance(sd) {}
 
-static SocketStream::ptr create_rock_stream(ServiceItemInfo::ptr info) {
+static SocketStream::ptr create_rock_stream(const std::string& domain,
+                                            const std::string& service,
+                                            ServiceItemInfo::ptr info) {
   // SYLAR_LOG_INFO(g_logger) << "create_rock_stream: " << info->toString();
   sylar::IPAddress::ptr addr =
       sylar::Address::LookupAnyIPAddress(info->getIp());
@@ -204,9 +208,23 @@ static SocketStream::ptr create_rock_stream(ServiceItemInfo::ptr info) {
 
   RockConnection::ptr conn = std::make_shared<RockConnection>();
 
-  sylar::WorkerMgr::GetInstance()->schedule("service_io", [conn, addr]() {
+  sylar::WorkerMgr::GetInstance()->schedule("service_io", [conn, addr, domain,
+                                                           service]() {
     conn->connect(addr);
     conn->start();
+    if (domain == "logserver") {
+      sylar::RockRequest::ptr req = std::make_shared<sylar::RockRequest>();
+      req->setCmd(100);
+      logserver::LoginRequest login_req;
+      login_req.set_ipport(sylar::Module::GetServiceIPPort("rock"));
+      login_req.set_host(sylar::GetHostName());
+      login_req.set_pid(getpid());
+      req->setAsPB(login_req);
+      auto r = conn->request(req, 200);
+      if (r->result) {
+        SYLAR_LOG_ERROR(g_logger) << "logserver login error: " << r->toString();
+      }
+    }
   });
   return conn;
 }

@@ -29,9 +29,12 @@ class SocketStream : public Stream {
   std::string getRemoteAddressString();
   std::string getLocalAddressString();
 
+  uint64_t getId() const { return m_id; }
+
  protected:
   Socket::ptr m_socket;
-  bool m_owner;
+  uint64_t m_id : 63;
+  bool m_owner : 1;
 };
 
 }  // namespace sylar

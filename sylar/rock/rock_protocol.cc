@@ -69,7 +69,8 @@ bool RockRequest::parseFromByteArray(ByteArray::ptr bytearray) {
     v &= RockBody::parseFromByteArray(bytearray);
     return v;
   } catch (...) {
-    SYLAR_LOG_ERROR(g_logger) << "RockRequest parseFromByteArray error";
+    SYLAR_LOG_ERROR(g_logger)
+        << "RockRequest parseFromByteArray error " << bytearray->toHexString();
   }
   return false;
 }
@@ -165,8 +166,9 @@ Message::ptr RockMessageDecoder::parseFrom(Stream::ptr stream) {
     RockMsgHeader header;
     int rt = stream->readFixSize(&header, sizeof(header));
     if (rt <= 0) {
-      SYLAR_LOG_ERROR(g_logger)
-          << "RockMessageDecoder decode head error rt=" << rt;
+      SYLAR_LOG_DEBUG(g_logger)
+          << "RockMessageDecoder decode head error rt=" << rt << " "
+          << strerror(errno);
       return nullptr;
     }
 

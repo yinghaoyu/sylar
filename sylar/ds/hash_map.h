@@ -95,7 +95,7 @@ class HashMap {
       Node node(k);
       node.val = v;
 
-      m_datas[pos].push_back(node);
+      m_datas[pos].emplace_back(node);
       SortLast(&m_datas[pos][0], m_datas[pos].size());
       // std::sort(m_datas[pos].begin(), m_datas[pos].end());
       sylar::Atomic::addFetch(m_total);
@@ -149,7 +149,7 @@ class HashMap {
     std::vector<std::pair<K, V>> tmp;
     tmp.reserve(oth.getTotal());
     oth.rforeach([&tmp](const K& k, const V& v) {
-      tmp.push_back(std::make_pair(k, v));
+      tmp.emplace_back(std::make_pair(k, v));
       return true;
     });
 
@@ -183,7 +183,7 @@ class HashMap {
     for (size_t i = 0; i < m_size; ++i) {
       sylar::RWMutex::ReadLock lock2(s_mutex[i % MAX_MUTEX]);
       for (auto n : m_datas[i]) {
-        ns.push_back(n);
+        ns.emplace_back(n);
       }
     }
 
@@ -231,7 +231,7 @@ class HashMap {
 
         m_datas = new std::vector<Node>[m_size]();
         for (auto& n : ns) {
-          m_datas[m_posHash(n.key) % m_size].push_back(n);
+          m_datas[m_posHash(n.key) % m_size].emplace_back(n);
         }
         for (size_t i = 0; i < m_size; ++i) {
           std::sort(m_datas[i].begin(), m_datas[i].end());
@@ -244,6 +244,8 @@ class HashMap {
     } while (0);
     return false;
   }
+
+  float getRate() const { return m_total * 1.0 / m_size; }
 
  private:
   struct Node {
@@ -265,7 +267,7 @@ class HashMap {
     std::vector<Node>* datas = new std::vector<Node>[size]();
     for (size_t i = 0; i < m_size; ++i) {
       for (auto& n : m_datas[i]) {
-        datas[m_posHash(n.key) % size].push_back(n);
+        datas[m_posHash(n.key) % size].emplace_back(n);
       }
     }
     for (size_t i = 0; i < size; ++i) {
@@ -286,8 +288,6 @@ class HashMap {
     delete[] datas;
     datas = nullptr;
   }
-
-  float getRate() const { return m_total * 1.0 / m_size; }
 
   bool needRehash() const { return getRate() > 16; }
 

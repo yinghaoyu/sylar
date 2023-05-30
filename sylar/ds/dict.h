@@ -98,7 +98,7 @@ class Dict {
       node.val = new V[node.size]();
       memcpy(node.val, v, size * sizeof(V));
 
-      m_datas[pos].push_back(node);
+      m_datas[pos].emplace_back(node);
       SortLast(&m_datas[pos][0], m_datas[pos].size());
       // std::sort(m_datas[pos].begin(), m_datas[pos].end());
 
@@ -189,7 +189,7 @@ class Dict {
         size_t offset = vs.size();
         vs.insert(vs.end(), n.val, n.val + n.size);
         n.val = (V*)offset;
-        ns.push_back(n);
+        ns.emplace_back(n);
       }
     }
 
@@ -263,7 +263,7 @@ class Dict {
         m_datas = new std::vector<Node>[m_size]();
         for (auto& n : ns) {
           n.val = &vs[0] + (uint64_t)n.val;
-          m_datas[m_posHash(n.key) % m_size].push_back(n);
+          m_datas[m_posHash(n.key) % m_size].emplace_back(n);
         }
         for (size_t i = 0; i < m_size; ++i) {
           std::sort(m_datas[i].begin(), m_datas[i].end());
@@ -276,6 +276,8 @@ class Dict {
     } while (0);
     return false;
   }
+
+  float getRate() const { return m_total * 1.0 / m_size; }
 
  private:
   std::string getString(const K& k) {
@@ -313,7 +315,7 @@ class Dict {
     std::vector<Node>* datas = new std::vector<Node>[size]();
     for (size_t i = 0; i < m_size; ++i) {
       for (auto& n : m_datas[i]) {
-        datas[m_posHash(n.key) % size].push_back(n);
+        datas[m_posHash(n.key) % size].emplace_back(n);
       }
     }
     for (size_t i = 0; i < size; ++i) {
@@ -351,8 +353,6 @@ class Dict {
     delete[] datas;
     datas = nullptr;
   }
-
-  float getRate() const { return m_total * 1.0 / m_size; }
 
   bool needRehash() const { return getRate() > 16; }
 

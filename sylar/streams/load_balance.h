@@ -208,6 +208,8 @@ class SDLoadBalance {
 
   virtual void start();
   virtual void stop();
+  virtual bool doQuery();
+  virtual bool doRegister();
 
   stream_callback getCb() const { return m_cb; }
   void setCb(stream_callback v) { m_cb = v; }

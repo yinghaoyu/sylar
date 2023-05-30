@@ -306,6 +306,11 @@ int Application::run_fiber() {
         std::make_shared<RockSDLoadBalance>(m_serviceDiscovery);
   }
 
+  if (m_rockSDLoadBalance) {
+    m_rockSDLoadBalance->start();
+    sleep(1);
+  }
+
   for (auto& i : modules) {
     i->onServerReady();
   }
@@ -314,23 +319,39 @@ int Application::run_fiber() {
     i->start();
   }
 
-  if (m_rockSDLoadBalance) {
-    m_rockSDLoadBalance->start();
-  }
-
   for (auto& i : modules) {
     i->onServerUp();
   }
-  // ZKServiceDiscovery::ptr m_serviceDiscovery;
-  // RockSDLoadBalance::ptr m_rockSDLoadBalance;
-  // sylar::ZKServiceDiscovery::ptr zksd(new
-  // sylar::ZKServiceDiscovery("127.0.0.1:21811")); zksd->registerServer("blog",
-  // "chat", sylar::GetIPv4() + ":8090", "xxx"); zksd->queryServer("blog",
-  // "chat"); zksd->setSelfInfo(sylar::GetIPv4() + ":8090");
-  // zksd->setSelfData("vvv");
-  // static RockSDLoadBalance::ptr rsdlb(new RockSDLoadBalance(zksd));
-  // rsdlb->start();
+
+  if (m_rockSDLoadBalance) {
+    m_rockSDLoadBalance->doRegister();
+  }
   return 0;
+}
+
+void Application::initEnv() {
+  sylar::WorkerMgr::GetInstance()->init();
+  FoxThreadMgr::GetInstance()->init();
+  FoxThreadMgr::GetInstance()->start();
+  RedisMgr::GetInstance();
+  DnsMgr::GetInstance()->init();
+  DnsMgr::GetInstance()->start();
+
+  if (!g_service_discovery_zk->getValue().empty()) {
+    m_serviceDiscovery = std::make_shared<ZKServiceDiscovery>(
+        g_service_discovery_zk->getValue());
+    m_rockSDLoadBalance =
+        std::make_shared<RockSDLoadBalance>(m_serviceDiscovery);
+  } else if (!g_service_discovery_redis->getValue().empty()) {
+    m_serviceDiscovery = std::make_shared<RedisServiceDiscovery>(
+        g_service_discovery_redis->getValue());
+    m_rockSDLoadBalance =
+        std::make_shared<RockSDLoadBalance>(m_serviceDiscovery);
+  }
+
+  if (m_rockSDLoadBalance) {
+    m_rockSDLoadBalance->start();
+  }
 }
 
 bool Application::getServer(const std::string& type,

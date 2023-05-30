@@ -152,8 +152,8 @@ ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
 protobufmaker(sylar/ns/ns_protobuf.proto LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS ${LIB_SRC})
-#add_library(sylar SHARED ${LIB_SRC})
-add_library(sylar STATIC ${LIB_SRC})
+add_library(sylar SHARED ${LIB_SRC})
+#add_library(sylar STATIC ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar)
 #add_library(sylar_static STATIC ${LIB_SRC})
 #SET_TARGET_PROPERTIES (sylar_static PROPERTIES OUTPUT_NAME "sylar")
@@ -166,9 +166,7 @@ find_library(PTHREAD pthread)
 #set(LIBS ${LIBS} ${PTHREAD})
 
 set(LIBS
-        "-Wl,--whole-archive"
         sylar
-        "-Wl,--no-whole-archive"
         dl
         pthread
         yaml-cpp

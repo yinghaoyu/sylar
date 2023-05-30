@@ -26,6 +26,8 @@ class Application {
     return m_rockSDLoadBalance;
   }
 
+  void initEnv();
+
  private:
   int main(int argc, char** argv);
   int run_fiber();

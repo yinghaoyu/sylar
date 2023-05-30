@@ -452,6 +452,14 @@ void SDLoadBalance::onServiceChange(
   }
 }
 
+bool SDLoadBalance::doQuery() {
+  bool rt = m_sd->doQuery();
+  return rt;
+}
+bool SDLoadBalance::doRegister() {
+  return m_sd->doRegister();
+}
+
 void SDLoadBalance::start() {
   if (m_timer) {
     return;

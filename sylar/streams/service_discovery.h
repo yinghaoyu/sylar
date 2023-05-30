@@ -1,12 +1,14 @@
 #ifndef __SYLAR_STREAMS_SERVICE_DISCOVERY_H__
 #define __SYLAR_STREAMS_SERVICE_DISCOVERY_H__
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include "sylar/iomanager.h"
 #include "sylar/mutex.h"
+#include "sylar/util.h"
 #include "sylar/zk_client.h"
 
 namespace sylar {
@@ -19,16 +21,26 @@ class ServiceItemInfo {
 
   uint64_t getId() const { return m_id; }
   uint16_t getPort() const { return m_port; }
+  uint32_t getUpdateTime() const { return m_updateTime; }
   const std::string& getIp() const { return m_ip; }
   const std::string& getData() const { return m_data; }
 
   std::string toString() const;
 
+  std::string getData(const std::string& key,
+                      const std::string& def = "") const;
+  template <class T>
+  T getDataAs(const std::string& key, const T& def = T()) const {
+    return sylar::GetParamValue(m_datas, key, def);
+  }
+
  private:
   uint64_t m_id;
   uint16_t m_port;
+  uint32_t m_updateTime = 0;
   std::string m_ip;
   std::string m_data;
+  std::map<std::string, std::string> m_datas;
 };
 
 class IServiceDiscovery {
@@ -69,6 +81,14 @@ class IServiceDiscovery {
       const std::unordered_map<std::string, std::unordered_set<std::string>>&
           v);
 
+  const std::string& getSelfInfo() const { return m_selfInfo; }
+  void setSelfInfo(const std::string& v) { m_selfInfo = v; }
+  const std::string& getSelfData() const { return m_selfData; }
+  void setSelfData(const std::string& v) { m_selfData = v; }
+
+  void addParam(const std::string& key, const std::string& val);
+  std::string getParam(const std::string& key, const std::string& def = "");
+
  protected:
   sylar::RWMutex m_mutex;
   // domain -> [service -> [id -> ServiceItemInfo] ]
@@ -87,6 +107,11 @@ class IServiceDiscovery {
   std::unordered_map<std::string, std::unordered_set<std::string>> m_queryInfos;
 
   service_callback m_cb;
+
+  std::string m_selfInfo;
+  std::string m_selfData;
+
+  std::map<std::string, std::string> m_params;
 };
 
 class ZKServiceDiscovery
@@ -95,10 +120,6 @@ class ZKServiceDiscovery
  public:
   typedef std::shared_ptr<ZKServiceDiscovery> ptr;
   ZKServiceDiscovery(const std::string& hosts);
-  const std::string& getSelfInfo() const { return m_selfInfo; }
-  void setSelfInfo(const std::string& v) { m_selfInfo = v; }
-  const std::string& getSelfData() const { return m_selfData; }
-  void setSelfData(const std::string& v) { m_selfData = v; }
 
   virtual void start();
   virtual void stop();
@@ -121,11 +142,28 @@ class ZKServiceDiscovery
 
  private:
   std::string m_hosts;
-  std::string m_selfInfo;
-  std::string m_selfData;
   ZKClient::ptr m_client;
   sylar::Timer::ptr m_timer;
   bool m_isOnTimer = false;
+};
+
+class RedisServiceDiscovery
+    : public IServiceDiscovery,
+      public std::enable_shared_from_this<RedisServiceDiscovery> {
+ public:
+  typedef std::shared_ptr<RedisServiceDiscovery> ptr;
+  RedisServiceDiscovery(const std::string& name);
+
+  virtual void start();
+  virtual void stop();
+
+ private:
+  bool registerSelf();
+  bool queryInfo();
+
+ private:
+  std::string m_name;
+  sylar::Timer::ptr m_timer;
 };
 
 }  // namespace sylar

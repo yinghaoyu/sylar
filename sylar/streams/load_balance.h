@@ -114,7 +114,7 @@ class ILoadBalance {
 
 class LoadBalance : public ILoadBalance {
  public:
-  typedef sylar::RWMutex RWMutexType;
+  typedef sylar::RWSpinlock RWMutexType;
   typedef std::shared_ptr<LoadBalance> ptr;
   void add(LoadBalanceItem::ptr v);
   void del(LoadBalanceItem::ptr v);
@@ -143,7 +143,7 @@ class RoundRobinLoadBalance : public LoadBalance {
   virtual LoadBalanceItem::ptr get(uint64_t v = -1) override;
 
  protected:
-  virtual void initNolock();
+  virtual void initNolock() override;
 
  protected:
   std::vector<LoadBalanceItem::ptr> m_items;
@@ -167,7 +167,7 @@ class WeightLoadBalance : public LoadBalance {
   FairLoadBalanceItem::ptr getAsFair();
 
  protected:
-  virtual void initNolock();
+  virtual void initNolock() override;
 
  private:
   int32_t getIdx(uint64_t v = -1);
@@ -200,7 +200,7 @@ class SDLoadBalance {
   typedef std::shared_ptr<SDLoadBalance> ptr;
   typedef std::function<SocketStream::ptr(ServiceItemInfo::ptr)>
       stream_callback;
-  typedef sylar::RWMutex RWMutexType;
+  typedef sylar::RWSpinlock RWMutexType;
 
   SDLoadBalance(IServiceDiscovery::ptr sd);
   virtual ~SDLoadBalance() {}

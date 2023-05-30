@@ -19,6 +19,8 @@ struct RockResult {
   RockResponse::ptr response;
   RockRequest::ptr request;
 
+  std::string server;
+
   std::string toString() const;
 };
 

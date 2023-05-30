@@ -1,3 +1,5 @@
+#include <string>
+
 #include "http_session.h"
 #include "http_parser.h"
 
@@ -37,6 +39,13 @@ HttpRequest::ptr HttpSession::recvRequest() {
     }
   } while (true);
   int64_t length = parser->getContentLength();
+
+  auto v = parser->getData()->getHeader("Expect");
+  if (strcasecmp(v.c_str(), "100-continue") == 0) {
+    static const std::string s_data = "HTTP/1.1 100 Continue\r\n\r\n";
+    writeFixSize(s_data.c_str(), s_data.size());
+  }
+
   if (length > 0) {
     std::string body;
     body.resize(length);

@@ -1,5 +1,6 @@
 #include "bytearray.h"
 #include <string.h>
+#include <boost/lexical_cast/try_lexical_convert.hpp>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -16,8 +17,12 @@ ByteArray::Node::Node(size_t s) : ptr(new char[s]), next(nullptr), size(s) {}
 ByteArray::Node::Node() : ptr(nullptr), next(nullptr), size(0) {}
 
 ByteArray::Node::~Node() {
+}
+
+void ByteArray::Node::free() {
   if (ptr) {
     delete[] ptr;
+    ptr = nullptr;
   }
 }
 
@@ -27,14 +32,31 @@ ByteArray::ByteArray(size_t base_size)
       m_capacity(base_size),
       m_size(0),
       m_endian(SYLAR_BIG_ENDIAN),
+      m_owner(true),
       m_root(new Node(base_size)),
       m_cur(m_root) {}
+
+ByteArray::ByteArray(void* data, size_t size, bool owner)
+    : m_baseSize(size),
+      m_position(0),
+      m_capacity(size),
+      m_size(0),
+      m_endian(SYLAR_BIG_ENDIAN),
+      m_owner(owner) {
+  m_root = new Node();
+  m_root->ptr = (char*)data;
+  m_root->size = size;
+  m_cur = m_root;
+}
 
 ByteArray::~ByteArray() {
   Node* tmp = m_root;
   while (tmp) {
     m_cur = tmp;
     tmp = tmp->next;
+    if (m_owner) {
+      m_cur->free();
+    }
     delete m_cur;
   }
 }
@@ -325,6 +347,9 @@ void ByteArray::clear() {
   while (tmp) {
     m_cur = tmp;
     tmp = tmp->next;
+    if (m_owner) {
+      m_cur->free();
+    }
     delete m_cur;
   }
   m_cur = m_root;
@@ -451,7 +476,7 @@ void ByteArray::setPosition(size_t v) {
   }
 }
 
-bool ByteArray::writeToFile(const std::string& name) const {
+bool ByteArray::writeToFile(const std::string& name, bool with_md5) const {
   std::ofstream ofs;
   ofs.open(name, std::ios::trunc | std::ios::binary);
   if (!ofs) {
@@ -473,6 +498,11 @@ bool ByteArray::writeToFile(const std::string& name) const {
     cur = cur->next;
     pos += len;
     read_size -= len;
+  }
+
+  if (with_md5) {
+    std::ofstream ofs_md5(name + ".md5");
+    ofs_md5 << getMd5();
   }
 
   return true;
@@ -651,6 +681,12 @@ uint64_t ByteArray::getWriteBuffers(std::vector<iovec>& buffers, uint64_t len) {
     buffers.push_back(iov);
   }
   return size;
+}
+
+std::string ByteArray::getMd5() const {
+  std::vector<iovec> buffers;
+  getReadBuffers(buffers, -1, 0);
+  return sylar::md5sum(buffers);
 }
 
 }  // namespace sylar

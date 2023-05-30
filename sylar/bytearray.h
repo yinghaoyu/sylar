@@ -20,12 +20,21 @@ class ByteArray {
     Node();
     ~Node();
 
+    void free();
+
     char* ptr;    // 当前节点存储位置
     Node* next;   // 下一个节点
     size_t size;  // 每个节点的大小为 size * sizeof(char)
   };
 
   ByteArray(size_t base_size = 4096);
+
+  // 操作外部已有内存,如果owner为false,不支持写操作
+  // data 内存指针
+  // size 数据大小
+  // owner 是否管理该内存
+  ByteArray(void* data, size_t size, bool owner = false);
+
   ~ByteArray();
 
   // write
@@ -93,7 +102,7 @@ class ByteArray {
   size_t getPosition() const { return m_position; }
   void setPosition(size_t v);
 
-  bool writeToFile(const std::string& name) const;
+  bool writeToFile(const std::string& name, bool with_md5 = false) const;
   bool readFromFile(const std::string& name);
 
   size_t getBaseSize() const { return m_baseSize; }
@@ -119,12 +128,15 @@ class ByteArray {
   void addCapacity(size_t size);
   size_t getCapacity() const { return m_capacity - m_position; }
 
+  std::string getMd5() const;
+
  private:
   size_t m_baseSize;  // 每个节点的初始大小
   size_t m_position;  // 当在 array 访问的位置
   size_t m_capacity;  // array 的容量上限
   size_t m_size;      // array 的使用容量
   int8_t m_endian;    // 1小端 2大端
+  bool m_owner;       // 是否拥有数据的管理权限
   Node* m_root;       // 链表节点头
   Node* m_cur;        // 当前在访问的节点
 };

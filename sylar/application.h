@@ -45,6 +45,8 @@ class Application {
   RockSDLoadBalance::ptr m_rockSDLoadBalance;
 };
 
+std::string GetServerWorkPath();
+
 }  // namespace sylar
 
 #endif

@@ -73,6 +73,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
         data[len] = '\0';
         size_t nparse = parser->execute(data, len, true);
         if (parser->hasError()) {
+          goto out;
           close();
           return nullptr;
         }
@@ -129,6 +130,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
       }
     }
   }
+out:
   if (!body.empty()) {
     auto content_encoding = parser->getData()->getHeader("content-encoding");
     SYLAR_LOG_DEBUG(g_logger)

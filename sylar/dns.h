@@ -26,6 +26,9 @@ class Dns {
   const std::string& getDomain() const { return m_domain; }
   int getType() const { return m_type; }
 
+  std::string getCheckPath() const { return m_checkPath; }
+  void setCheckPath(const std::string& v) { m_checkPath = v; }
+
   std::string toString();
 
   void refresh();
@@ -39,6 +42,7 @@ class Dns {
     sylar::Spinlock m_mutex;
     bool valid = false;
     uint32_t pool_size = 0;
+    std::string check_path;
 
     bool isValid();
     bool checkValid(uint32_t timeout_ms);
@@ -60,6 +64,7 @@ class Dns {
   int m_type;
   uint32_t m_idx;
   uint32_t m_poolSize = 0;
+  std::string m_checkPath;
   RWMutexType m_mutex;
   std::vector<AddressItem::ptr> m_address;
   std::set<std::string> m_addrs;

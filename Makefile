@@ -5,7 +5,7 @@ BUILD_DIR=$(SOURCE_DIR)/build
 
 "":
 	if [ -d $(BUILD_DIR) ]; then \
-		cd $(BUILD_DIR) && make -j4; \
+		cd $(BUILD_DIR) && make -j8; \
 	else \
 		mkdir -p $(BUILD_DIR); \
 		ln -sf $(BUILD_DIR)/compile_commands.json; \

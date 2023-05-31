@@ -191,6 +191,7 @@ class HttpRequest {
   const std::string& getPath() const { return m_path; }
   const std::string& getQuery() const { return m_query; }
   const std::string& getFragment() const { return m_fragment; }
+  void paramToQuery();
   const std::string& getBody() const { return m_body; }
   const MapType& getHeaders() const { return m_headers; }
   const MapType& getParams() const { return m_params; }

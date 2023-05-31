@@ -102,6 +102,10 @@ set(LIB_SRC
     sylar/http/ws_connection.cc
     sylar/http/ws_session.cc
     sylar/http/ws_server.cc
+    sylar/http2/dynamic_table.cc
+    sylar/http2/frame.cc
+    sylar/http2/hpack.cc
+    sylar/http2/huffman.cc
     sylar/http/ws_servlet.cc
     #sylar/http/http11_parser.rl.cc
     #sylar/http/httpclient_parser.rl.cc

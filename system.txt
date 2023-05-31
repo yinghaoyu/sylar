@@ -1,0 +1,25 @@
+2023-05-30 17:07:17	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/log.yml ok
+2023-05-30 17:07:17	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/redis.yml ok
+2023-05-30 17:07:17	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/server.yml ok
+2023-05-30 17:07:17	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/service.yml ok
+2023-05-30 17:07:17	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/system.yml ok
+2023-05-30 17:07:17	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/worker.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/application.cc:146	main
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/dns.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/fox_thread.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/log.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/redis.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/server.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/service.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/system.yml ok
+2023-05-30 17:07:18	32046	UNKNOW	0	[INFO]	[system]	sylar/config.cc:89	LoadConfFile file=/mnt/g/sylar/bin/conf/worker.yml ok
+2023-05-30 17:07:18	32046	main	0	[INFO]	[system]	sylar/scheduler.cc:74	0x5625a63c6650 stopped
+2023-05-30 17:07:18	32046	main	3	[INFO]	[system]	sylar/db/fox_thread.cc:468	init thread pool:redis num:2 advance:0
+2023-05-30 17:07:18	32046	main	3	[INFO]	[system]	sylar/db/fox_thread.cc:476	thread: redis start begin
+2023-05-30 17:07:18	32046	main	3	[INFO]	[system]	sylar/db/fox_thread.cc:478	thread: redis start end
+2023-05-30 17:07:18	32078	UNKNOW	0	[ERROR]	[system]	sylar/db/redis.cc:471	FoxRedis::ConnectCb 127.0.0.1:6379 fail, error:Connection refused
+2023-05-30 17:07:18	32046	main	3	[ERROR]	[system]	sylar/socket.cc:217	sock=41 connect(/tmp/test.sock) error errno=13 errstr=Permission denied
+2023-05-30 17:07:18	32079	UNKNOW	0	[ERROR]	[system]	sylar/db/redis.cc:471	FoxRedis::ConnectCb 127.0.0.1:6379 fail, error:Connection refused
+2023-05-30 17:07:18	32046	main	3	[ERROR]	[system]	sylar/socket.cc:182	bind error errrno=98 errstr=Address already in use
+2023-05-30 17:07:18	32046	main	3	[ERROR]	[system]	sylar/tcp_server.cc:47	bind fail errno=98 errstr=Address already in use addr=[/tmp/test.sock]
+2023-05-30 17:07:18	32046	main	3	[ERROR]	[system]	sylar/application.cc:295	bind address fail:/tmp/test.sock

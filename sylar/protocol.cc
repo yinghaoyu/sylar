@@ -11,7 +11,9 @@ ByteArray::ptr Message::toByteArray() {
   return nullptr;
 }
 
-Request::Request() : m_sn(0), m_cmd(0) {}
+Request::Request() : m_sn(0), m_cmd(0) {
+  m_time = sylar::GetCurrentUS();
+}
 
 bool Request::serializeToByteArray(ByteArray::ptr bytearray) {
   bytearray->writeFuint8(getType());

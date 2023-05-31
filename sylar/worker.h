@@ -22,6 +22,7 @@ class WorkerGroup : Noncopyable,
   ~WorkerGroup();
 
   void schedule(std::function<void()> cb, int thread = -1);
+  void schedule(const std::vector<std::function<void()>>& cbs);
   void waitAll();
 
  private:

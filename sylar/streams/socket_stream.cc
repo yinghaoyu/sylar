@@ -1,6 +1,6 @@
 #include "socket_stream.h"
-#include "sylar/util.h"
 #include "sylar/log.h"
+#include "sylar/util.h"
 
 namespace sylar {
 
@@ -57,23 +57,16 @@ int SocketStream::write(ByteArray::ptr ba, size_t length) {
   if (!isConnected()) {
     return -1;
   }
-  int rrt = 0;
   std::vector<iovec> iovs;
   ba->getReadBuffers(iovs, length);
-  for (size_t i = 0; i < iovs.size(); ++i) {
-    int rt = m_socket->send(&iovs[i], 1);
-    if (rt > 0) {
-      ba->setPosition(ba->getPosition() + rt);
-      rrt += rt;
-    } else {
-      SYLAR_LOG_ERROR(g_logger)
-          << "write fail length=" << length << " errno=" << errno << ", "
-          << strerror(errno);
-      rrt = rt;
-      break;
-    }
+  int rt = m_socket->send(&iovs[0], iovs.size());
+  if (rt > 0) {
+    ba->setPosition(ba->getPosition() + rt);
+  } else {
+    SYLAR_LOG_ERROR(g_logger) << "write fail length=" << length
+                              << " errno=" << errno << ", " << strerror(errno);
   }
-  return rrt;
+  return rt;
 }
 
 void SocketStream::close() {

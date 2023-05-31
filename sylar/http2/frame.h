@@ -1,23 +1,12 @@
 #ifndef __SYLAR_HTTP2_FRAME_H__
 #define __SYLAR_HTTP2_FRAME_H__
 
+#include "hpack.h"
 #include "sylar/bytearray.h"
+#include "sylar/stream.h"
 
 namespace sylar {
 namespace http2 {
-
-/*
-HTTP2 frame 格式
-+-----------------------------------------------+
-|                 Length (24)                   |
-+---------------+---------------+---------------+
-|   Type (8)    |   Flags (8)   |
-+-+-------------+---------------+-------------------------------+
-|R|                 Stream Identifier (31)                      |
-+=+=============================================================+
-|                   Frame Payload (0...)                      ...
-+---------------------------------------------------------------+
-*/
 
 #pragma pack(push)
 #pragma pack(1)
@@ -57,7 +46,21 @@ enum class FrameR {
   SET = 0x1,
 };
 
+/*
+HTTP2 frame 格式
++-----------------------------------------------+
+|                 Length (24)                   |
++---------------+---------------+---------------+
+|   Type (8)    |   Flags (8)   |
++-+-------------+---------------+-------------------------------+
+|R|                 Stream Identifier (31)                      |
++=+=============================================================+
+|                   Frame Payload (0...)                      ...
++---------------------------------------------------------------+
+*/
+
 struct FrameHeader {
+  static const uint32_t SIZE = 9;
   typedef std::shared_ptr<FrameHeader> ptr;
   union {
     struct {
@@ -84,9 +87,18 @@ class IFrame {
  public:
   typedef std::shared_ptr<IFrame> ptr;
 
+  virtual ~IFrame() {}
   virtual std::string toString() const = 0;
   virtual bool writeTo(ByteArray::ptr ba, const FrameHeader& header) = 0;
   virtual bool readFrom(ByteArray::ptr ba, const FrameHeader& header) = 0;
+};
+
+struct Frame {
+  typedef std::shared_ptr<Frame> ptr;
+  FrameHeader header;
+  IFrame::ptr data;
+
+  std::string toString() const;
 };
 
 /*
@@ -167,8 +179,8 @@ struct HeadersFrame : public IFrame {
  +---------------------------------------------------------------+
 */
 
-struct RstFrame : public IFrame {
-  typedef std::shared_ptr<RstFrame> ptr;
+struct RstStreamFrame : public IFrame {
+  typedef std::shared_ptr<RstStreamFrame> ptr;
   static const uint32_t SIZE = 4;
   uint32_t error_code = 0;
 
@@ -312,6 +324,14 @@ struct WindowUpdateFrame : public IFrame {
   std::string toString() const;
   bool writeTo(ByteArray::ptr ba, const FrameHeader& header);
   bool readFrom(ByteArray::ptr ba, const FrameHeader& header);
+};
+
+class FrameCodec {
+ public:
+  typedef std::shared_ptr<FrameCodec> ptr;
+
+  Frame::ptr parseFrom(Stream::ptr stream);
+  int32_t serializeTo(Stream::ptr stream, Frame::ptr frame);
 };
 
 std::string FrameTypeToString(FrameType type);

@@ -132,6 +132,8 @@ class TcpServer : public std::enable_shared_from_this<TcpServer>, Noncopyable {
 
   std::vector<Socket::ptr> getSocks() const { return m_socks; }
 
+  bool isSSL() const { return m_ssl;}
+
  protected:
   virtual void handleClient(Socket::ptr client);
   virtual void startAccept(Socket::ptr sock);

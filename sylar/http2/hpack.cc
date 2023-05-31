@@ -33,6 +33,8 @@ std::string HeaderField::toString() const {
   return ss.str();
 }
 
+HPack::HPack(DynamicTable& table) : m_table(table) {}
+
 int HPack::WriteVarInt(ByteArray::ptr ba, int32_t prefix, uint64_t value,
                        uint8_t flags) {
   size_t pos = ba->getPosition();
@@ -116,6 +118,11 @@ int HPack::WriteString(ByteArray::ptr ba, const std::string& str, bool h) {
   return ba->getPosition() - pos;
 }
 
+int HPack::parse(std::string& data) {
+  ByteArray::ptr ba(new ByteArray(&data[0], data.size(), false));
+  return parse(ba, data.size());
+}
+
 int HPack::parse(ByteArray::ptr ba, int length) {
   int parsed = 0;
   int pos = ba->getPosition();
@@ -179,8 +186,7 @@ int HPack::parse(ByteArray::ptr ba, int length) {
   return parsed;
 }
 
-int HPack::pack(HeaderField* header, ByteArray::ptr ba) {
-  m_headers.push_back(*header);
+int HPack::Pack(HeaderField* header, ByteArray::ptr ba) {
   int pos = ba->getPosition();
 
   if (header->type == IndexType::INDEXED) {
@@ -208,6 +214,20 @@ int HPack::pack(HeaderField* header, ByteArray::ptr ba) {
     WriteString(ba, header->value, header->h_value);
   }
   return ba->getPosition() - pos;
+}
+
+int HPack::pack(HeaderField* header, ByteArray::ptr ba) {
+  m_headers.push_back(*header);
+  return Pack(header, ba);
+}
+
+int HPack::pack(const std::vector<std::pair<std::string, std::string>>& headers,
+                std::string& out) {
+  ByteArray::ptr ba(new ByteArray);
+  int rt = pack(headers, ba);
+  ba->setPosition(0);
+  ba->toString().swap(out);
+  return rt;
 }
 
 int HPack::pack(const std::vector<std::pair<std::string, std::string>>& headers,
@@ -239,6 +259,16 @@ int HPack::pack(const std::vector<std::pair<std::string, std::string>>& headers,
     rt += pack(&h, ba);
   }
   return rt;
+}
+
+std::string HPack::toString() const {
+  std::stringstream ss;
+  ss << "[HPack size=" << m_headers.size() << "]" << std::endl;
+  for (size_t i = 0; i < m_headers.size(); ++i) {
+    ss << "\t" << i << "\t:\t" << m_headers[i].toString() << std::endl;
+  }
+  ss << m_table.toString();
+  return ss.str();
 }
 
 }  // namespace http2

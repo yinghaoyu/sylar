@@ -186,6 +186,9 @@ class HttpRequest {
 
   std::shared_ptr<HttpResponse> createResponse();
 
+  void setUri(const std::string& uri);
+  std::string getUri();
+
   HttpMethod getMethod() const { return m_method; }
   uint8_t getVersion() const { return m_version; }
   const std::string& getPath() const { return m_path; }

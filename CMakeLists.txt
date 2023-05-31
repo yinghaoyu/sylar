@@ -86,6 +86,7 @@ set(LIB_SRC
     sylar/file_manager.cc
     sylar/fiber.cc
     sylar/fcontext/fcontext.S
+    sylar/grpc/grpc_stream.cc
     sylar/libaco/aco.c
     sylar/libaco/acosw.S
     sylar/libco/coctx.cc
@@ -105,7 +106,10 @@ set(LIB_SRC
     sylar/http2/dynamic_table.cc
     sylar/http2/frame.cc
     sylar/http2/hpack.cc
+    sylar/http2/http2_stream.cc
+    sylar/http2/http2_server.cc
     sylar/http2/huffman.cc
+    sylar/http2/stream.cc
     sylar/http/ws_servlet.cc
     #sylar/http/http11_parser.rl.cc
     #sylar/http/httpclient_parser.rl.cc
@@ -153,12 +157,18 @@ set(ORM_SRCS
     sylar/orm/util.cc
     )
 
+set(GRPC_SRCS
+    tests/test_grpc_client.cc
+    tests/test.pb.cc
+    )
+
 ragelmaker(sylar/http/http11_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar/http)
 ragelmaker(sylar/http/httpclient_parser.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar/http)
 ragelmaker(sylar/uri.rl LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/sylar)
 
 protobufmaker(sylar/ns/ns_protobuf.proto LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR})
 protobufmaker(sylar/proto/logserver.proto LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR})
+protobufmaker(tests/test.proto GRPC_SRC ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS ${LIB_SRC})
 add_library(sylar SHARED ${LIB_SRC})
@@ -244,6 +254,10 @@ if(${BUILD_TEST})
     sylar_add_executable(test_hashmap "tests/test_hashmap.cc" sylar "${LIBS}")
     sylar_add_executable(test_dict "tests/test_dict.cc" sylar "${LIBS}")
     sylar_add_executable(test_array "tests/test_array.cc" sylar "${LIBS}")
+
+    sylar_add_executable(test_http2client "tests/test_http2_client.cc" sylar "${LIBS}")
+    sylar_add_executable(test_http2server "tests/test_http2_server.cc" sylar "${LIBS}")
+    sylar_add_executable(test_grpcclient "${GRPC_SRCS}" sylar "${LIBS}")
 
     sylar_add_executable(orm "${ORM_SRCS}" sylar "${LIBS}")
 

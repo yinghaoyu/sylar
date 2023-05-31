@@ -15,6 +15,7 @@ void AsyncSocketStream::Ctx::doRsp() {
   if (!sylar::Atomic::compareAndSwapBool(scheduler, scd, (Scheduler*)nullptr)) {
     return;
   }
+  SYLAR_LOG_DEBUG(g_logger) << "scd=" << scd << " fiber=" << fiber;
   if (!scd || !fiber) {
     return;
   }
@@ -150,6 +151,7 @@ void AsyncSocketStream::startWrite() {
 }
 
 void AsyncSocketStream::onTimeOut(Ctx::ptr ctx) {
+  SYLAR_LOG_DEBUG(g_logger) << "onTimeOut " << ctx;
   {
     RWMutexType::WriteLock lock(m_mutex);
     m_ctxs.erase(ctx->sn);

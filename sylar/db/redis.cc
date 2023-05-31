@@ -542,6 +542,7 @@ void FoxRedis::CmdCb(redisAsyncContext* ac, void* r, void* privdata) {
 
 void FoxRedis::TimeCb(int fd, short event, void* d) {
   FoxRedis* ar = static_cast<FoxRedis*>(d);
+  SYLAR_ASSERT(ar->m_thread == sylar::FoxThread::GetThis());
   redisAsyncCommand(ar->m_context.get(), CmdCb, nullptr, "ping");
 }
 

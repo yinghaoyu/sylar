@@ -40,9 +40,6 @@ if(SQLite3_FOUND)
   include_directories(${SQLite3_INCLUDE_DIRS})
 endif()
 
-include_directories(/path/to/tinyxml2/include)
-link_directories(/path/to/tinyxml2/lib)
-
 # find_package(TinyXML2 REQUIRED)
 # if(TinyXML2_FOUND)
 #   include_directories(${TinyXML2_INCLUDE_DIRS})

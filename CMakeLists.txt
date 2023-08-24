@@ -186,7 +186,7 @@ set(LIBS
         dl
         pthread
         yaml-cpp
-        jsoncpp_lib_static
+        jsoncpp_lib
         tinyxml2
         mysqlclient
         zookeeper_mt

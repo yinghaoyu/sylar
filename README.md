@@ -10,9 +10,18 @@
 
 ```bash
 sudo apt update
-sudo apt install mysql-server libmysqlclient-dev libboost-all-dev libssl-dev libjsoncpp-dev zlib1g-dev libsqlite3-dev libtinyxml2-dev protobuf-compiler libprotobuf-dev libtbb-dev librdkafka-dev
+
+sudo apt install mysql-server libmysqlclient-dev libboost-all-dev libssl-dev zlib1g-dev libsqlite3-dev libtinyxml2-dev protobuf-compiler libprotobuf-dev libtbb-dev librdkafka-dev
+
 git clone https://github.com/vipshop/hiredis-vip.git
 cd hiredis-vip
+make
+sudo make install
+
+// 下载最新的jsoncpp，为了支持 int64_t
+git clone https://github.com/open-source-parsers/jsoncpp
+mkdir build
+cmake ..
 make
 sudo make install
 ```

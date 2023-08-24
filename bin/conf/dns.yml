@@ -1,4 +1,4 @@
-dns.bak:
+dns:
   config:
     - domain: sylar.top:80
       type: 1

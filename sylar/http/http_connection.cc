@@ -26,7 +26,6 @@ HttpConnection::~HttpConnection() {
 HttpResponse::ptr HttpConnection::recvResponse() {
   HttpResponseParser::ptr parser = std::make_shared<HttpResponseParser>();
   uint64_t buff_size = HttpRequestParser::GetHttpRequestBufferSize();
-  // uint64_t buff_size = 100;
   std::shared_ptr<char> buffer(new char[buff_size + 1],
                                [](char* ptr) { delete[] ptr; });
   char* data = buffer.get();
@@ -132,6 +131,7 @@ HttpResponse::ptr HttpConnection::recvResponse() {
   }
 out:
   if (!body.empty()) {
+    // 如果 body 有内容，需要检查压缩方式
     auto content_encoding = parser->getData()->getHeader("content-encoding");
     SYLAR_LOG_DEBUG(g_logger)
         << "content_encoding: " << content_encoding << " size=" << body.size();
@@ -252,43 +252,6 @@ HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr req, Uri::ptr uri,
                                         "invalid host: " + uri->getHost());
   }
   return DoRequest(req, addr, is_ssl, timeout_ms);
-  // Socket::ptr sock = is_ssl ? SSLSocket::CreateTCP(addr) :
-  // Socket::CreateTCP(addr); if(!sock) {
-  //     return
-  //     std::make_shared<HttpResult>((int)HttpResult::Error::CREATE_SOCKET_ERROR
-  //             , nullptr, "create socket fail: " + addr->toString()
-  //                     + " errno=" + std::to_string(errno)
-  //                     + " errstr=" + std::string(strerror(errno)));
-  // }
-  // uint64_t ts1 = sylar::GetCurrentMS();
-  // if(!sock->connect(addr, timeout_ms)) {
-  //     return
-  //     std::make_shared<HttpResult>((int)HttpResult::Error::CONNECT_FAIL
-  //             , nullptr, "connect fail: " + addr->toString());
-  // }
-  // timeout_ms -= sylar::GetCurrentMS() - ts1;
-  // sock->setRecvTimeout(timeout_ms);
-  // HttpConnection::ptr conn = std::make_shared<HttpConnection>(sock);
-  // int rt = conn->sendRequest(req);
-  // if(rt == 0) {
-  //     return
-  //     std::make_shared<HttpResult>((int)HttpResult::Error::SEND_CLOSE_BY_PEER
-  //             , nullptr, "send request closed by peer: " + addr->toString());
-  // }
-  // if(rt < 0) {
-  //     return
-  //     std::make_shared<HttpResult>((int)HttpResult::Error::SEND_SOCKET_ERROR
-  //                 , nullptr, "send request socket error errno=" +
-  //                 std::to_string(errno)
-  //                 + " errstr=" + std::string(strerror(errno)));
-  // }
-  // auto rsp = conn->recvResponse();
-  // if(!rsp) {
-  //     return std::make_shared<HttpResult>((int)HttpResult::Error::TIMEOUT
-  //                 , nullptr, "recv response timeout: " + addr->toString()
-  //                 + " timeout_ms:" + std::to_string(timeout_ms));
-  // }
-  // return std::make_shared<HttpResult>((int)HttpResult::Error::OK, rsp, "ok");
 }
 
 HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr req,
@@ -310,28 +273,6 @@ HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr req,
   }
   timeout_ms -= sylar::GetCurrentMS() - ts1;
   return DoRequest(req, sock, timeout_ms);
-  // sock->setRecvTimeout(timeout_ms);
-  // HttpConnection::ptr conn = std::make_shared<HttpConnection>(sock);
-  // int rt = conn->sendRequest(req);
-  // if(rt == 0) {
-  //     return
-  //     std::make_shared<HttpResult>((int)HttpResult::Error::SEND_CLOSE_BY_PEER
-  //             , nullptr, "send request closed by peer: " + addr->toString());
-  // }
-  // if(rt < 0) {
-  //     return
-  //     std::make_shared<HttpResult>((int)HttpResult::Error::SEND_SOCKET_ERROR
-  //                 , nullptr, "send request socket error errno=" +
-  //                 std::to_string(errno)
-  //                 + " errstr=" + std::string(strerror(errno)));
-  // }
-  // auto rsp = conn->recvResponse();
-  // if(!rsp) {
-  //     return std::make_shared<HttpResult>((int)HttpResult::Error::TIMEOUT
-  //                 , nullptr, "recv response timeout: " + addr->toString()
-  //                 + " timeout_ms:" + std::to_string(timeout_ms));
-  // }
-  // return std::make_shared<HttpResult>((int)HttpResult::Error::OK, rsp, "ok");
 }
 
 HttpResult::ptr HttpConnection::DoRequest(HttpRequest::ptr req,

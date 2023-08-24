@@ -131,11 +131,18 @@ bool Application::run() {
 void sigproc(int sig) {
   SYLAR_LOG_INFO(g_logger) << "sigproc sig=" << sig;
   if (sig == SIGUSR1) {
+    // 参考 nginx
+    // linux下，当一个进程打开文件，
+    // 日志归档时，文件被移动，由于进程没有结束，inode 节点引用计数任然 > 0，
+    // 即使这个文件因为移动更换了目录，进程还是会继续写这个 inode，
+    // 所以需要重新打开文件，当前目录会生成同名文件，会使用新的 inode 节点
     sylar::LoggerMgr::GetInstance()->reopen();
   }
 }
 
 void initSignal() {
+  // 对一个已经关闭了的 socketfd 进行写操作，第一次会收到 rst
+  // 第二次会直接退出进程，所以要忽略 SIGPIPE 信号
   signal(SIGPIPE, SIG_IGN);
   signal(SIGUSR1, sigproc);
 }

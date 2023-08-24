@@ -17,6 +17,7 @@ void WSServer::handleClient(Socket::ptr client) {
   SYLAR_LOG_DEBUG(g_logger) << "handleClient " << *client;
   WSSession::ptr session = std::make_shared<WSSession>(client);
   do {
+    // websocket 需要依赖 http 协议进行一次握手，后续数据收发直接走 TCP 传输
     HttpRequest::ptr header = session->handleShake();
     if (!header) {
       SYLAR_LOG_DEBUG(g_logger) << "handleShake error";
@@ -33,6 +34,7 @@ void WSServer::handleClient(Socket::ptr client) {
       break;
     }
     while (true) {
+      // websocket 数据收发
       auto msg = session->recvMessage();
       if (!msg) {
         break;

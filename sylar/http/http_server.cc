@@ -42,7 +42,11 @@ void HttpServer::handleClient(Socket::ptr client) {
     rsp->setHeader("Server", getName());
     rsp->setHeader("Content-Type", "application/json;charset=utf8");
     {
+      // 注意这里没有新建协程对象 !!!
+      // 当前协程在 SchedulerSwitcher 的构造函数里切换到工作协程，工作协程和当前协程是同一个协程对象
+      // 当工作协程返回到当前协程的时候，是在 SchedulerSwitcher 的析构函数里，而不是在构造函数里 !!!
       sylar::SchedulerSwitcher sw(m_worker);
+      // 工作协程处理 request 并返回 response
       m_dispatch->handle(req, rsp, session);
     }
     session->sendResponse(rsp);

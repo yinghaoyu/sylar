@@ -69,6 +69,12 @@ std::string HttpRequest::getHeader(const std::string& key,
   return it == m_headers.end() ? def : it->second;
 }
 
+// 例如：https:127.0.0.1:80/src/index.html?key1=value1&key2=value2#SomewhereInTheDocument
+// 域名：https:127.0.0.1
+// 端口：80
+// 路径：/src/index.html
+// 参数：key1=value1 & key2=value2
+// 锚点：SomewhereInTheDocument
 void HttpRequest::setUri(const std::string& uri) {
   auto pos = uri.find('?');
   if (pos == std::string::npos) {

@@ -12,7 +12,6 @@ HttpSession::HttpSession(Socket::ptr sock, bool owner)
 HttpRequest::ptr HttpSession::recvRequest() {
   HttpRequestParser::ptr parser = std::make_shared<HttpRequestParser>();
   uint64_t buff_size = HttpRequestParser::GetHttpRequestBufferSize();
-  // uint64_t buff_size = 100;
   std::shared_ptr<char> buffer(new char[buff_size],
                                [](char* ptr) { delete[] ptr; });
   char* data = buffer.get();
@@ -42,6 +41,9 @@ HttpRequest::ptr HttpSession::recvRequest() {
 
   auto v = parser->getData()->getHeader("Expect");
   if (strcasecmp(v.c_str(), "100-continue") == 0) {
+    // 客户端在发送 POST 数据前，先征询服务器的情况。
+    // 通常在处理 POST 大数据时，才会使用 100-continue 协议
+    // 服务端如果处理，只需要返回 100-continue 给客户端即可
     static const std::string s_data = "HTTP/1.1 100 Continue\r\n\r\n";
     writeFixSize(s_data.c_str(), s_data.size());
     parser->getData()->delHeader("Expect");

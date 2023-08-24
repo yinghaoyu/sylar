@@ -1041,22 +1041,25 @@ SpeedLimit::SpeedLimit(uint32_t speed)
   if (speed == 0) {
     m_speed = (uint32_t)-1;
   }
+  // 把 speed 转成每毫秒的计数
   m_countPerMS = m_speed / 1000.0;
 }
 
 void SpeedLimit::add(uint32_t v) {
   uint64_t curms = sylar::GetCurrentMS();
   if (curms / 1000 != m_curSec) {
+    // 不在同一秒内就更新
     m_curSec = curms / 1000;
+    // 计数直接替换
     m_curCount = v;
     return;
   }
-
+  // 在同一秒内，计数累加
   m_curCount += v;
-
+  // 两次调用 add 的间隔毫秒数
   int usedms = curms % 1000;
   int limitms = m_curCount / m_countPerMS;
-
+  // 超过了限定时间，就 usleep 一下
   if (usedms < limitms) {
     usleep(1000 * (limitms - usedms));
   }

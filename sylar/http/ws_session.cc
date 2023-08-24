@@ -40,8 +40,9 @@ HttpRequest::ptr WSSession::handleShake() {
       SYLAR_LOG_INFO(g_logger) << "http header Sec-WebSocket-Key = null";
       break;
     }
-
+    // 密钥 + websocket魔数
     std::string v = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    // 根据 RFC 6455，需要先 sha1 加密，再转 base64 编码
     v = sylar::base64encode(sylar::sha1sum(v));
     req->setWebsocket(true);
 
@@ -107,30 +108,38 @@ WSFrameMessage::ptr WSRecvMessage(Stream* stream, bool client) {
     if (ws_head.opcode == WSFrameHead::PING) {
       SYLAR_LOG_INFO(g_logger) << "PING";
       if (WSPong(stream) <= 0) {
+        // ping pong回复
         break;
       }
     } else if (ws_head.opcode == WSFrameHead::PONG) {
+      // do nothing
     } else if (ws_head.opcode == WSFrameHead::CONTINUE ||
                ws_head.opcode == WSFrameHead::TEXT_FRAME ||
                ws_head.opcode == WSFrameHead::BIN_FRAME) {
       if (!client && !ws_head.mask) {
+        // 服务端收到没有使用掩码覆盖的frame，立即终止 websocket 连接
         SYLAR_LOG_INFO(g_logger) << "WSFrameHead mask != 1";
         break;
       }
       uint64_t length = 0;
       if (ws_head.payload == 126) {
+        // 当头部 payload 的字段为 126 时，后面紧跟的是 16 位无符号整数
+        // 表示的是 payload 的实际长度
         uint16_t len = 0;
         if (stream->readFixSize(&len, sizeof(len)) <= 0) {
           break;
         }
         length = sylar::byteswapOnLittleEndian(len);
       } else if (ws_head.payload == 127) {
+        // 当头部 payload 字段为 127 时，后面紧跟的是 64 位无符号整数
+        // 表示的是 payload 的实际长度
         uint64_t len = 0;
         if (stream->readFixSize(&len, sizeof(len)) <= 0) {
           break;
         }
         length = sylar::byteswapOnLittleEndian(len);
       } else {
+        // 否则的话，payload字段 就是 payload 的实际长度
         length = ws_head.payload;
       }
 
@@ -153,16 +162,19 @@ WSFrameMessage::ptr WSRecvMessage(Stream* stream, bool client) {
       }
       if (ws_head.mask) {
         for (int i = 0; i < (int)length; ++i) {
+          // 填充异或掩码后的值
           data[cur_len + i] ^= mask[i % 4];
         }
       }
       cur_len += length;
 
       if (!opcode && ws_head.opcode != WSFrameHead::CONTINUE) {
+        // 保存 opcode 的有效值
         opcode = ws_head.opcode;
       }
 
       if (ws_head.fin) {
+        // 拼帧结束，得到完成的数据包
         SYLAR_LOG_DEBUG(g_logger) << data;
         return std::make_shared<WSFrameMessage>(opcode, std::move(data));
       }

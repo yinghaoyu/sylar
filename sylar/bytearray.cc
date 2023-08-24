@@ -16,8 +16,7 @@ ByteArray::Node::Node(size_t s) : ptr(new char[s]), next(nullptr), size(s) {}
 
 ByteArray::Node::Node() : ptr(nullptr), next(nullptr), size(0) {}
 
-ByteArray::Node::~Node() {
-}
+ByteArray::Node::~Node() {}
 
 void ByteArray::Node::free() {
   if (ptr) {
@@ -122,6 +121,13 @@ void ByteArray::writeFuint64(uint64_t value) {
   write(&value, sizeof(value));
 }
 
+// 根据移码规则，把负数转化为正数，保证 bit 为 1 都是有效值，而不是符号
+// -2 -> 3
+// -1 -> 1
+//  0 -> 0
+//  1 -> 2
+//  2 -> 4
+// 可以看到，负数是奇数，正数是偶数，任意值都是唯一且连续
 static uint32_t EncodeZigzag32(const int32_t& v) {
   if (v < 0) {
     return ((uint32_t)(-v)) * 2 - 1;
@@ -147,9 +153,13 @@ static int64_t DecodeZigzag64(const uint64_t& v) {
 }
 
 void ByteArray::writeInt32(int32_t value) {
+  // 先通过 Zigzag 将负数转成正数，再压缩
   writeUint32(EncodeZigzag32(value));
 }
 
+// 每个字节浪费 1 bit 表示高位是否存在有效数据
+// 实际上，小数字用到的比较多，比如正常情况下，数字 6 用 int 需要 4 个字节，
+// 而在这种方法下，可以将 6 的表示压缩为 1 个字节
 void ByteArray::writeUint32(uint32_t value) {
   uint8_t tmp[5];
   uint8_t i = 0;
@@ -178,6 +188,7 @@ void ByteArray::writeUint64(uint64_t value) {
 
 void ByteArray::writeFloat(float value) {
   uint32_t v;
+  // memcpy 可将 float double 无损转存为 uint32_t
   memcpy(&v, &value, sizeof(value));
   writeFuint32(v);
 }
@@ -264,6 +275,7 @@ int32_t ByteArray::readInt32() {
 
 uint32_t ByteArray::readUint32() {
   uint32_t result = 0;
+  // 每个字节 7 个有效位
   for (int i = 0; i < 32; i += 7) {
     uint8_t b = readFuint8();
     if (b < 0x80) {
@@ -464,8 +476,11 @@ void ByteArray::setPosition(size_t v) {
   }
   m_position = v;
   if (m_position > m_size) {
+    // 如果 arr 实际保存的 size < position
+    // 我们也强制调整 size 为 position，即使 [size, position] 这段区间内数据为 0
     m_size = m_position;
   }
+  // cur 移动到 position 位置对应的节点
   m_cur = m_root;
   while (v > m_cur->size) {
     v -= m_cur->size;
@@ -485,7 +500,7 @@ bool ByteArray::writeToFile(const std::string& name, bool with_md5) const {
         << " errstr=" << strerror(errno);
     return false;
   }
-
+  // 读取 [position, size] 区间内的数据到文件
   int64_t read_size = getReadSize();
   int64_t pos = m_position;
   Node* cur = m_cur;
@@ -586,24 +601,28 @@ std::string ByteArray::toHexString() const {
 
 uint64_t ByteArray::getReadBuffers(std::vector<iovec>& buffers,
                                    uint64_t len) const {
+  // 获取待读取的长度，最大长度为 size - position
   len = len > getReadSize() ? getReadSize() : len;
   if (len == 0) {
     return 0;
   }
 
   uint64_t size = len;
-
+  // npos 为节点内偏移
   size_t npos = m_position % m_baseSize;
+  // ncap 为剩余需要读取的大小
   size_t ncap = m_cur->size - npos;
   struct iovec iov;
   Node* cur = m_cur;
 
   while (len > 0) {
     if (ncap >= len) {
+      // 读取节点内的数据
       iov.iov_base = cur->ptr + npos;
       iov.iov_len = len;
       len = 0;
     } else {
+      // 读取的不止一个节点
       iov.iov_base = cur->ptr + npos;
       iov.iov_len = ncap;
       len -= ncap;
@@ -616,6 +635,7 @@ uint64_t ByteArray::getReadBuffers(std::vector<iovec>& buffers,
   return size;
 }
 
+// 从 position 处开始读取，原理与上面函数相同
 uint64_t ByteArray::getReadBuffers(std::vector<iovec>& buffers, uint64_t len,
                                    uint64_t position) const {
   len = len > getReadSize() ? getReadSize() : len;

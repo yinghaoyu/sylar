@@ -45,9 +45,9 @@ class AsyncSocketStream
     virtual ~Ctx() {}
     Ctx();
 
-    uint32_t sn;
-    uint32_t timeout;
-    uint32_t result;
+    uint32_t sn;       // 序列号
+    uint32_t timeout;  // 超时时间
+    uint32_t result;   // 结果
     bool timed;
 
     Scheduler* scheduler;

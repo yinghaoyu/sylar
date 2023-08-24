@@ -9,11 +9,11 @@ namespace sylar {
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 struct DnsDefine {
-  std::string domain;
+  std::string domain;  // 域名，例如：www.baudu.com:80
   int type;
-  int pool_size = 0;
-  std::string check_path;
-  std::set<std::string> addrs;
+  int pool_size = 0;            // 连接池大小
+  std::string check_path;       // 请求路径，用于检查连接的合法性
+  std::set<std::string> addrs;  // 域名对应的 ip 地址，可能有多个
 
   bool operator==(const DnsDefine& b) const {
     return domain == b.domain && type == b.type && addrs == b.addrs &&
@@ -89,6 +89,7 @@ struct DnsIniter {
   DnsIniter() {
     g_dns_defines->addListener([](const std::set<DnsDefine>& old_value,
                                   const std::set<DnsDefine>& new_value) {
+      // LoadFromYaml 时，触发回调，更新 dns 缓存信息
       for (auto& n : new_value) {
         if (n.type == Dns::TYPE_DOMAIN) {
           Dns::ptr dns = std::make_shared<Dns>(n.domain, n.type, n.pool_size);
@@ -110,6 +111,7 @@ struct DnsIniter {
   }
 };
 
+// 利用 RAII 设置回调函数
 static DnsIniter __dns_init;
 
 Dns::Dns(const std::string& domain, int type, uint32_t pool_size)
@@ -134,12 +136,14 @@ void Dns::init() {
   lock2.unlock();
 
   std::vector<Address::ptr> result;
+  // 根据地址获取详细地址信息
   for (auto& i : addrs) {
     if (!sylar::Address::Lookup(result, i, sylar::Socket::IPv4,
                                 sylar::Socket::TCP)) {
       SYLAR_LOG_ERROR(g_logger) << m_domain << " invalid address: " << i;
     }
   }
+  // 根据详细地址信息，更新 dns 缓存
   initAddress(result);
 }
 
@@ -208,10 +212,12 @@ std::string Dns::AddressItem::toString() {
 
 bool Dns::AddressItem::checkValid(uint32_t timeout_ms) {
   if (pool_size > 0) {
+    // 连接池 size > 0，需要检查已连接的 socket
     std::vector<Socket*> tmp;
     sylar::Spinlock::Lock lock(m_mutex);
     for (auto it = socks.begin(); it != socks.end();) {
       if ((*it)->checkConnected()) {
+        // 只要有一个 socket 状态是成功的，返回 true
         return true;
       } else {
         tmp.push_back(*it);
@@ -220,16 +226,18 @@ bool Dns::AddressItem::checkValid(uint32_t timeout_ms) {
     }
     lock.unlock();
     for (auto& i : tmp) {
+      // 删除连接出错的 socket
       delete i;
     }
   }
-
+  // 新建 socket 连接到域名对应的 ip
   sylar::Socket* sock =
       new sylar::Socket(addr->getFamily(), sylar::Socket::TCP, 0);
   valid = sock->connect(addr, timeout_ms);
 
   if (valid) {
     if (!check_path.empty()) {
+      // 检查请求路径
       sylar::http::HttpRequest::ptr req =
           std::make_shared<sylar::http::HttpRequest>();
       req->setPath(check_path);
@@ -238,6 +246,7 @@ bool Dns::AddressItem::checkValid(uint32_t timeout_ms) {
       auto rt =
           sylar::http::HttpConnection::DoRequest(req, sock_ptr, timeout_ms);
       if (!rt->response || (int)rt->response->getStatus() != 200) {
+        // 请求路径不合法
         valid = false;
         SYLAR_LOG_ERROR(g_logger)
             << "health_check fail result=" << rt->result << " rsp.status="
@@ -246,6 +255,7 @@ bool Dns::AddressItem::checkValid(uint32_t timeout_ms) {
       }
     }
     if (valid && pool_size > 0) {
+      // 设定了连接池，则保存 socket
       sylar::Spinlock::Lock lock(m_mutex);
       socks.push_back(sock);
     } else {
@@ -322,6 +332,7 @@ Socket::ptr Dns::AddressItem::getSock() {
 }
 
 void Dns::initAddress(const std::vector<Address::ptr>& result) {
+  // 获取缓存的 dns 信息
   std::map<std::string, AddressItem::ptr> old_address;
   {
     RWMutexType::ReadLock lock(m_mutex);
@@ -338,11 +349,14 @@ void Dns::initAddress(const std::vector<Address::ptr>& result) {
   std::map<std::string, AddressItem::ptr> m;
   for (size_t i = 0; i < result.size(); ++i) {
     auto it = old_address.find(result[i]->toString());
+    // 查找域名对应的 ip 是否在旧 dns 信息里
     if (it != old_address.end()) {
+      // 更新 ip 地址的 socket 连接
       it->second->checkValid(50);
       address[i] = it->second;
       continue;
     }
+    // 不在 dns 缓存里，就新建连接，并加入 dns 缓存
     auto info = std::make_shared<AddressItem>();
     info->addr = result[i];
     info->pool_size = m_poolSize;
@@ -355,6 +369,7 @@ void Dns::initAddress(const std::vector<Address::ptr>& result) {
   m_address.swap(address);
 }
 
+// 刷新 dns 缓存信息，包括具体的连接
 void Dns::refresh() {
   if (m_type == TYPE_DOMAIN) {
     std::vector<Address::ptr> result;
@@ -381,12 +396,14 @@ Dns::ptr DnsManager::get(const std::string& domain) {
 
 sylar::Address::ptr DnsManager::getAddress(const std::string& service,
                                            bool cache, uint32_t seed) {
+  // 获取域名对应的地址信息
   auto dns = get(service);
   if (dns) {
     return dns->get(seed);
   }
-
+  // dns 缓存没找到该域名
   if (cache) {
+    // 如果需要，则加入 dns 缓存
     sylar::IOManager::GetThis()->schedule([service, this]() {
       Dns::ptr dns = std::make_shared<Dns>(service, Dns::TYPE_DOMAIN);
       dns->refresh();

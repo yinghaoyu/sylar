@@ -65,11 +65,16 @@ std::pair<HttpResult::ptr, WSConnection::ptr> WSConnection::Create(
     req->setHeader(i.first, i.second);
   }
   req->setWebsocket(true);
+  // http 1.1 提供了协议升级机制
+  // 客户端使用 Upgrade 标头字段请求服务器，以降序优先选择列出的一个协议
   if (!has_conn) {
     req->setHeader("connection", "Upgrade");
   }
   req->setHeader("Upgrade", "websocket");
+  // 指定协议版本
+  // RFC 6455
   req->setHeader("Sec-webSocket-Version", "13");
+  // 指定秘钥，好像没什么作用
   req->setHeader("Sec-webSocket-Key", sylar::base64encode(random_string(16)));
   if (!has_host) {
     req->setHeader("Host", uri->getHost());
@@ -99,7 +104,7 @@ std::pair<HttpResult::ptr, WSConnection::ptr> WSConnection::Create(
                                   " timeout_ms:" + std::to_string(timeout_ms)),
                           nullptr);
   }
-
+  // 服务端响应客户端的升级协议请求
   if (rsp->getStatus() != HttpStatus::SWITCHING_PROTOCOLS) {
     return std::make_pair(
         std::make_shared<HttpResult>(

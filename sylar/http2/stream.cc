@@ -60,6 +60,7 @@ int32_t Stream::handleFrame(Frame::ptr frame, bool is_client) {
       }
       Http2InitResponseForRead(m_response);
     } else {
+      // 服务端解析收到的请求
       if (!m_request) {
         m_request = std::make_shared<http::HttpRequest>(0x20);
       }

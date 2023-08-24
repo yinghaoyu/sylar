@@ -42,7 +42,7 @@ class Dns {
     sylar::Spinlock m_mutex;
     bool valid = false;
     uint32_t pool_size = 0;
-    std::string check_path;
+    std::string check_path;  // 请求路径
 
     bool isValid();
     bool checkValid(uint32_t timeout_ms);
@@ -60,14 +60,14 @@ class Dns {
   void initAddress(const std::vector<Address::ptr>& result);
 
  private:
-  std::string m_domain;
-  int m_type;
+  std::string m_domain;  // m_type 表示域名时有效
+  int m_type;            // dns 的类型，域名或者地址
   uint32_t m_idx;
   uint32_t m_poolSize = 0;
   std::string m_checkPath;
   RWMutexType m_mutex;
   std::vector<AddressItem::ptr> m_address;
-  std::set<std::string> m_addrs;
+  std::set<std::string> m_addrs;  // m_type 表示地址时有效
 };
 
 class DnsManager {

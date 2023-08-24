@@ -25,12 +25,16 @@ struct WSFrameHead {
     /// PONG
     PONG = 0xA
   };
+  // 保存 OPCODE 枚举类型
   uint32_t opcode : 4;
+  // rsv为预留字段
   bool rsv3 : 1;
   bool rsv2 : 1;
   bool rsv1 : 1;
-  bool fin : 1;
+  bool fin : 1;  // 是否是最后一个 frame
   uint32_t payload : 7;
+  // 根据 RFC6455 当客户端向服务端发送 frame 需要使用掩码覆盖
+  // 为了解决代理缓存污染攻击
   bool mask : 1;
 
   std::string toString() const;

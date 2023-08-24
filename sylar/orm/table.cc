@@ -133,7 +133,7 @@ void Table::gen_inc(const std::string& path) {
 
   ofs << std::endl;
 
-  std::set<std::string> sincs = {"vector", "json/json.h"};
+  std::set<std::string> sincs = {"vector", "jsoncpp/json/json.h"};
   for (auto& i : sincs) {
     ofs << "#include <" << i << ">" << std::endl;
   }

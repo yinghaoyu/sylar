@@ -95,7 +95,9 @@ int32_t StatusServlet::handle(sylar::http::HttpRequest::ptr request,
   sylar::WorkerMgr::GetInstance()->dump(ss) << std::endl;
 
   std::map<std::string, std::vector<TcpServer::ptr>> servers;
-  sylar::Application::GetInstance()->listAllServer(servers);
+  if (sylar::Application::GetInstance()) {
+    sylar::Application::GetInstance()->listAllServer(servers);
+  }
   ss << "===================================================" << std::endl;
   for (auto it = servers.begin(); it != servers.end(); ++it) {
     if (it != servers.begin()) {

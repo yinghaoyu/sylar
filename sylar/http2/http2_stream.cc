@@ -132,7 +132,9 @@ int32_t Http2Stream::sendFrame(Frame::ptr frame) {
   }
 }
 
+// 只有客户端才会返回 ctx
 AsyncSocketStream::Ctx::ptr Http2Stream::doRecv() {
+  // 解析获取完整的 frame
   auto frame = m_codec->parseFrom(shared_from_this());
   if (!frame) {
     innerClose();
@@ -140,6 +142,7 @@ AsyncSocketStream::Ctx::ptr Http2Stream::doRecv() {
   }
   SYLAR_LOG_DEBUG(g_logger) << frame->toString();
   if (frame->header.identifier) {
+    // 取出帧序号对应的流
     auto stream = getStream(frame->header.identifier);
     if (!stream) {
       if (m_isClient) {
@@ -148,26 +151,32 @@ AsyncSocketStream::Ctx::ptr Http2Stream::doRecv() {
             << frame->toString();
         return nullptr;
       } else {
+        // 服务端接收数据时，流不存在，则创建
         stream = newStream(frame->header.identifier);
         if (!stream) {
+          // 创建失败给客户端发送 GOAWAY 帧，并关闭连接
           sendGoAway(m_sn, (uint32_t)Http2Error::PROTOCOL_ERROR, "");
           return nullptr;
         }
       }
     }
-
+    // 处理收到的帧
     stream->handleFrame(frame, m_isClient);
     if (stream->getState() == http2::Stream::State::CLOSED) {
       if (m_isClient) {
+        // 客户端流的状态为 CLOSED，说明收到的 frame 组成了一个完整的应答
         delStream(stream->getId());
+        // 获取请求的上下文
         RequestCtx::ptr ctx = getAndDelCtxAs<RequestCtx>(stream->getId());
         if (!ctx) {
           SYLAR_LOG_WARN(g_logger) << "Http2Stream request timeout response";
           return nullptr;
         }
+        // 设置请求的应答
         ctx->response = stream->getResponse();
         return ctx;
       } else {
+        // 服务端流的状态为 CLOSED，说明收到的 frame 组成了一个完整的请求
         auto req = stream->getRequest();
         if (!req) {
           SYLAR_LOG_DEBUG(g_logger)
@@ -177,11 +186,13 @@ AsyncSocketStream::Ctx::ptr Http2Stream::doRecv() {
           delStream(stream->getId());
           return nullptr;
         }
+        // 调度协程处理请求
         m_worker->schedule(
             std::bind(&Http2Stream::handleRequest, this, req, stream));
       }
     }
   } else {
+    // 帧序号为 0，说明是控制帧
     if (frame->header.type == (uint8_t)FrameType::SETTINGS) {
       if (!(frame->header.flags & (uint8_t)FrameFlagSettings::ACK)) {
         handleRecvSetting(frame);
@@ -240,6 +251,7 @@ bool Http2Stream::RequestCtx::doSend(AsyncSocketStream::ptr stream) {
   }
   hp.pack(hs, data->data);
   headers->data = data;
+  // 发送头部帧
   bool ok =
       std::dynamic_pointer_cast<Http2Stream>(stream)->m_codec->serializeTo(
           stream, headers) > 0;
@@ -248,6 +260,7 @@ bool Http2Stream::RequestCtx::doSend(AsyncSocketStream::ptr stream) {
     return ok;
   }
   if (!request->getBody().empty()) {
+    // 发送数据帧
     Frame::ptr body = std::make_shared<Frame>();
     body->header.type = (uint8_t)FrameType::DATA;
     body->header.flags = (uint8_t)FrameFlagData::END_STREAM;

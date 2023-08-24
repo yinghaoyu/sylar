@@ -28,6 +28,7 @@ void AsyncSocketStream::Ctx::doRsp() {
     result = TIMEOUT;
     resultStr = "timeout";
   }
+  // 调度 ctx 的协程
   scd->schedule(&fiber);
 }
 
@@ -48,6 +49,7 @@ bool AsyncSocketStream::start() {
   }
 
   do {
+    // 等待读写协程结束才能进行下一轮
     waitFiber();
 
     if (m_timer) {
@@ -63,7 +65,7 @@ bool AsyncSocketStream::start() {
         break;
       }
     }
-
+    // 读写加入协程调度
     startRead();
     startWrite();
 
@@ -83,7 +85,7 @@ bool AsyncSocketStream::start() {
       m_timer->cancel();
       m_timer = nullptr;
     }
-
+    // 2 秒后重连
     m_timer = m_iomanager->addTimer(
         2 * 1000, std::bind(&AsyncSocketStream::start, shared_from_this()));
   }
@@ -93,6 +95,8 @@ bool AsyncSocketStream::start() {
 void AsyncSocketStream::doRead() {
   try {
     while (isConnected()) {
+      // 注意这里是循环，连接有效协程就不结束
+      // 客户端返回 RequestCtx，里面包含服务器应答的 response
       auto ctx = doRecv();
       if (ctx) {
         ctx->doRsp();
@@ -103,7 +107,9 @@ void AsyncSocketStream::doRead() {
   }
 
   SYLAR_LOG_DEBUG(g_logger) << "doRead out " << this;
+  // 关闭接连
   innerClose();
+  // 通知 AsyncSocketStream::start 所在的协程，doRead协程结束了
   m_waitSem.notify();
 
   if (m_autoConnect) {
@@ -115,6 +121,8 @@ void AsyncSocketStream::doRead() {
 void AsyncSocketStream::doWrite() {
   try {
     while (isConnected()) {
+      // 注意这里是循环，连接有效协程就不结束
+      // 等待发送事件入队
       m_sem.wait();
       std::list<SendCtx::ptr> ctxs;
       {
@@ -123,6 +131,7 @@ void AsyncSocketStream::doWrite() {
       }
       auto self = shared_from_this();
       for (auto& i : ctxs) {
+        // 响应所有事件
         if (!i->doSend(self)) {
           innerClose();
           break;
@@ -137,6 +146,7 @@ void AsyncSocketStream::doWrite() {
     RWMutexType::WriteLock lock(m_queueMutex);
     m_queue.clear();
   }
+  // 通知 AsyncSocketStream::start 所在的协程，doWrite 协程结束了
   m_waitSem.notify();
 }
 

@@ -1,6 +1,6 @@
 #include "daemon.h"
-#include <sys/resource.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -55,6 +55,7 @@ static int real_daemon(int argc, char** argv,
     } else {
       ulimitc(0);
     }
+    // 子进程结束，父进程将会重新 fork 拉起子进程
     pid_t pid = fork();
     if (pid == 0) {
       // 子进程返回
@@ -70,6 +71,7 @@ static int real_daemon(int argc, char** argv,
     } else {
       // 父进程返回
       int status = 0;
+      // 父进程阻塞等待子进程结束
       waitpid(pid, &status, 0);
       if (status) {
         if (status == 9) {

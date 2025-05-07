@@ -251,7 +251,7 @@ class RWSpinlock : Noncopyable {
 
   ~RWSpinlock() {}
 
-  void rdlock() { m_lock.lock_read(); }
+  void rdlock() { m_lock.lock_shared(); }
 
   void wrlock() { m_lock.lock(); }
 

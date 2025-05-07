@@ -4,6 +4,7 @@
 #include <execinfo.h>
 #include <google/protobuf/unknown_field_set.h>
 #include <ifaddrs.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>

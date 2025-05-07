@@ -1,6 +1,7 @@
 #ifndef __SYLAR_HTTP2_DYNAMIC_TABLE_H__
 #define __SYLAR_HTTP2_DYNAMIC_TABLE_H__
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

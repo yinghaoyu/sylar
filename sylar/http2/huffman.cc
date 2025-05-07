@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cstdint>
 
 #include "huffman.h"
 #include "huffman_table.h"
-
-#include <iostream>
 
 #define HEX_TO_HF_CODE(hex) huffman_codes[hex]
 #define HEX_TO_HF_CODE_LEN(hex) huffman_code_len[hex]

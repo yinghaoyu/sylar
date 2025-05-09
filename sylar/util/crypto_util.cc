@@ -83,7 +83,7 @@ int32_t RSACipher::GenerateKey(const std::string& pubkey_file,
   EVP_PKEY* pkey = nullptr;
   do {
     // 创建EVP_PKEY_CTX上下文对象
-    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
     if (!ctx) {
       rt = -1;
       break;
@@ -107,20 +107,13 @@ int32_t RSACipher::GenerateKey(const std::string& pubkey_file,
       break;
     }
 
-    // 获取RSA私钥和公钥
-    RSA* rsa = EVP_PKEY_get1_RSA(pkey);
-    if (!rsa) {
-      rt = -5;
-      break;
-    }
-
     // 写入公钥文件
     fp = fopen(pubkey_file.c_str(), "w+");
     if (!fp) {
       rt = -6;
       break;
     }
-    PEM_write_RSAPublicKey(fp, rsa);
+    PEM_write_PUBKEY(fp, pkey);
     fclose(fp);
     fp = nullptr;
 
@@ -130,13 +123,9 @@ int32_t RSACipher::GenerateKey(const std::string& pubkey_file,
       rt = -7;
       break;
     }
-    PEM_write_RSAPrivateKey(fp, rsa, NULL, NULL, 0, NULL, NULL);
+    PEM_write_PrivateKey(fp, pkey, nullptr, nullptr, 0, nullptr, nullptr);
     fclose(fp);
     fp = nullptr;
-
-    RSA_free(rsa);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(ctx);
 
   } while (false);
   if (fp) {
@@ -160,12 +149,12 @@ RSACipher::ptr RSACipher::Create(const std::string& pubkey_file,
     if (!fp) {
       break;
     }
-    rt->m_pubkey = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
+    rt->m_pubkey = PEM_read_PUBKEY(fp, nullptr, nullptr, nullptr);
     if (!rt->m_pubkey) {
       break;
     }
 
-    RSA_print_fp(stdout, rt->m_pubkey, 0);
+    EVP_PKEY_print_public_fp(stdout, rt->m_pubkey, 0, nullptr);
     std::cout << "====" << std::endl;
 
     std::string tmp;
@@ -186,12 +175,12 @@ RSACipher::ptr RSACipher::Create(const std::string& pubkey_file,
     if (!fp) {
       break;
     }
-    rt->m_prikey = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
+    rt->m_prikey = PEM_read_PrivateKey(fp, nullptr, nullptr, nullptr);
     if (!rt->m_prikey) {
       break;
     }
 
-    RSA_print_fp(stdout, rt->m_prikey, 0);
+    EVP_PKEY_print_private_fp(stdout, rt->m_prikey, 0, nullptr);
     std::cout << "====" << std::endl;
     fseek(fp, 0, 0);
     do {
@@ -214,35 +203,131 @@ RSACipher::RSACipher() : m_pubkey(nullptr), m_prikey(nullptr) {}
 
 RSACipher::~RSACipher() {
   if (m_pubkey) {
-    RSA_free(m_pubkey);
+    EVP_PKEY_free(m_pubkey);
   }
   if (m_prikey) {
-    RSA_free(m_prikey);
+    EVP_PKEY_free(m_prikey);
   }
 }
 
 int32_t RSACipher::privateEncrypt(const void* from, int flen, void* to,
                                   int padding) {
-  return RSA_private_encrypt(flen, (const uint8_t*)from, (uint8_t*)to, m_prikey,
-                             padding);
+  EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(m_prikey, nullptr);
+  if (!ctx || EVP_PKEY_encrypt_init(ctx) <= 0) {
+    return -1;
+  }
+
+  // 设置填充模式
+  if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  size_t outlen = 0;
+  if (EVP_PKEY_encrypt(ctx, nullptr, &outlen, (const unsigned char*)from,
+                       flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  if (EVP_PKEY_encrypt(ctx, (unsigned char*)to, &outlen,
+                       (const unsigned char*)from, flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  EVP_PKEY_CTX_free(ctx);
+  return outlen;
 }
 
 int32_t RSACipher::publicEncrypt(const void* from, int flen, void* to,
                                  int padding) {
-  return RSA_public_encrypt(flen, (const uint8_t*)from, (uint8_t*)to, m_pubkey,
-                            padding);
+  EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(m_pubkey, nullptr);
+  if (!ctx || EVP_PKEY_encrypt_init(ctx) <= 0) {
+    return -1;
+  }
+
+  // 设置填充模式
+  if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  size_t outlen = 0;
+  if (EVP_PKEY_encrypt(ctx, nullptr, &outlen, (const unsigned char*)from,
+                       flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  if (EVP_PKEY_encrypt(ctx, (unsigned char*)to, &outlen,
+                       (const unsigned char*)from, flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  EVP_PKEY_CTX_free(ctx);
+  return outlen;
 }
 
 int32_t RSACipher::privateDecrypt(const void* from, int flen, void* to,
                                   int padding) {
-  return RSA_private_decrypt(flen, (const uint8_t*)from, (uint8_t*)to, m_prikey,
-                             padding);
+  EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(m_prikey, nullptr);
+  if (!ctx || EVP_PKEY_decrypt_init(ctx) <= 0) {
+    return -1;
+  }
+
+  // 设置填充模式
+  if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  size_t outlen = 0;
+  if (EVP_PKEY_decrypt(ctx, nullptr, &outlen, (const unsigned char*)from,
+                       flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  if (EVP_PKEY_decrypt(ctx, (unsigned char*)to, &outlen,
+                       (const unsigned char*)from, flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  EVP_PKEY_CTX_free(ctx);
+  return outlen;
 }
 
 int32_t RSACipher::publicDecrypt(const void* from, int flen, void* to,
                                  int padding) {
-  return RSA_public_decrypt(flen, (const uint8_t*)from, (uint8_t*)to, m_pubkey,
-                            padding);
+  EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(m_pubkey, nullptr);
+  if (!ctx || EVP_PKEY_decrypt_init(ctx) <= 0) {
+    return -1;
+  }
+
+  // 设置填充模式
+  if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  size_t outlen = 0;
+  if (EVP_PKEY_decrypt(ctx, nullptr, &outlen, (const unsigned char*)from,
+                       flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  if (EVP_PKEY_decrypt(ctx, (unsigned char*)to, &outlen,
+                       (const unsigned char*)from, flen) <= 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+
+  EVP_PKEY_CTX_free(ctx);
+  return outlen;
 }
 
 int32_t RSACipher::privateEncrypt(const void* from, int flen, std::string& to,
@@ -286,17 +371,11 @@ int32_t RSACipher::publicDecrypt(const void* from, int flen, std::string& to,
 }
 
 int32_t RSACipher::getPubRSASize() {
-  if (m_pubkey) {
-    return RSA_size(m_pubkey);
-  }
-  return -1;
+  return m_pubkey ? EVP_PKEY_size(m_pubkey) : -1;
 }
 
 int32_t RSACipher::getPriRSASize() {
-  if (m_prikey) {
-    return RSA_size(m_prikey);
-  }
-  return -1;
+  return m_prikey ? EVP_PKEY_size(m_prikey) : -1;
 }
 
 }  // namespace sylar

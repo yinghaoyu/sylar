@@ -72,8 +72,8 @@ class RSACipher {
   int32_t getPriRSASize();
 
  private:
-  RSA* m_pubkey;
-  RSA* m_prikey;
+  EVP_PKEY* m_pubkey;
+  EVP_PKEY* m_prikey;
   std::string m_pubkeyStr;
   std::string m_prikeyStr;
 };

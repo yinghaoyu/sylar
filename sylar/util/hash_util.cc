@@ -1,7 +1,7 @@
 #include "hash_util.h"
 
-#include <openssl/md5.h>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <string.h>
 #include <algorithm>
 #include <cstdlib>
@@ -379,61 +379,86 @@ std::string base64encode(const void* data, size_t len, bool url) {
 }
 
 std::string md5(const std::string& data) {
-  return hexstring_from_data(md5sum(data).c_str(), MD5_DIGEST_LENGTH);
+  return hexstring_from_data(md5sum(data));
 }
 
 std::string sha1(const std::string& data) {
-  return hexstring_from_data(sha1sum(data).c_str(), SHA_DIGEST_LENGTH);
+  return hexstring_from_data(sha1sum(data));
 }
 
 std::string md5sum(const void* data, size_t len) {
-  MD5_CTX ctx;
-  MD5_Init(&ctx);
-  MD5_Update(&ctx, data, len);
-  std::string result;
-  result.resize(MD5_DIGEST_LENGTH);
-  MD5_Final((unsigned char*)&result[0], &ctx);
-  return hexstring_from_data(result.c_str(), MD5_DIGEST_LENGTH);
+  EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+  if (ctx == nullptr) {
+    throw std::runtime_error("EVP_MD_CTX_new failed");
+  }
+  if (EVP_DigestInit_ex(ctx, EVP_md5(), nullptr) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestInit_ex failed");
+  }
+  if (EVP_DigestUpdate(ctx, data, len) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestUpdate failed");
+  }
+  unsigned char result[EVP_MAX_MD_SIZE];
+  unsigned int result_len = 0;
+  if (EVP_DigestFinal_ex(ctx, result, &result_len) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestFinal_ex failed");
+  }
+  EVP_MD_CTX_free(ctx);
+  return hexstring_from_data(result, result_len);
 }
 
 std::string md5sum(const std::vector<iovec>& data) {
-  MD5_CTX ctx;
-  MD5_Init(&ctx);
-  for (auto& i : data) {
-    MD5_Update(&ctx, i.iov_base, i.iov_len);
+  EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+  if (ctx == nullptr) {
+    throw std::runtime_error("EVP_MD_CTX_new failed");
   }
-  std::string result;
-  result.resize(MD5_DIGEST_LENGTH);
-  MD5_Final((unsigned char*)&result[0], &ctx);
-  return result;
+  if (EVP_DigestInit_ex(ctx, EVP_md5(), nullptr) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestInit_ex failed");
+  }
+  for (auto& i : data) {
+    if (EVP_DigestUpdate(ctx, i.iov_base, i.iov_len) != 1) {
+      EVP_MD_CTX_free(ctx);
+      throw std::runtime_error("EVP_DigestUpdate failed");
+    }
+  }
+  unsigned char result[EVP_MAX_MD_SIZE];
+  unsigned int result_len = 0;
+  if (EVP_DigestFinal_ex(ctx, result, &result_len) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestFinal_ex failed");
+  }
+  EVP_MD_CTX_free(ctx);
+  return std::string((char*)result, result_len);
 }
 
 std::string md5sum(const std::string& data) {
   return md5sum(data.c_str(), data.size());
 }
 
-std::string sha0sum(const void* data, size_t len) {
-  SHA_CTX ctx;
-  SHA1_Init(&ctx);
-  SHA1_Update(&ctx, data, len);
-  std::string result;
-  result.resize(SHA_DIGEST_LENGTH);
-  SHA1_Final((unsigned char*)&result[0], &ctx);
-  return result;
-}
-
-std::string sha0sum(const std::string& data) {
-  return sha0sum(data.c_str(), data.length());
-}
-
 std::string sha1sum(const void* data, size_t len) {
-  SHA_CTX ctx;
-  SHA1_Init(&ctx);
-  SHA1_Update(&ctx, data, len);
-  std::string result;
-  result.resize(SHA_DIGEST_LENGTH);
-  SHA1_Final((unsigned char*)&result[0], &ctx);
-  return result;
+  EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+  if (ctx == nullptr) {
+    throw std::runtime_error("EVP_MD_CTX_new failed");
+  }
+  if (EVP_DigestInit_ex(ctx, EVP_sha1(), nullptr) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestInit_ex failed");
+  }
+  if (EVP_DigestUpdate(ctx, data, len) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestUpdate failed");
+  }
+  unsigned char result[EVP_MAX_MD_SIZE];
+  unsigned int result_len = 0;
+  if (EVP_DigestFinal_ex(ctx, result, &result_len) != 1) {
+    EVP_MD_CTX_free(ctx);
+    throw std::runtime_error("EVP_DigestFinal_ex failed");
+  }
+  EVP_MD_CTX_free(ctx);
+  return std::string((char*)result, result_len);
 }
 
 std::string sha1sum(const std::string& data) {
@@ -476,18 +501,27 @@ std::string hmac(const std::string& text, const std::string& key) {
 }
 
 std::string hmac_md5(const std::string& text, const std::string& key) {
-  return hmac<MD5_CTX, &MD5_Init, &MD5_Update, &MD5_Final, MD5_CBLOCK,
-              MD5_DIGEST_LENGTH>(text, key);
+  unsigned char result[EVP_MAX_MD_SIZE];
+  unsigned int result_len = 0;
+  HMAC(EVP_md5(), key.data(), key.size(), (const unsigned char*)text.data(),
+       text.size(), result, &result_len);
+  return std::string((char*)result, result_len);
 }
 
 std::string hmac_sha1(const std::string& text, const std::string& key) {
-  return hmac<SHA_CTX, &SHA1_Init, &SHA1_Update, &SHA1_Final, SHA_CBLOCK,
-              SHA_DIGEST_LENGTH>(text, key);
+  unsigned char result[EVP_MAX_MD_SIZE];
+  unsigned int result_len = 0;
+  HMAC(EVP_sha1(), key.data(), key.size(), (const unsigned char*)text.data(),
+       text.size(), result, &result_len);
+  return std::string((char*)result, result_len);
 }
 
 std::string hmac_sha256(const std::string& text, const std::string& key) {
-  return hmac<SHA256_CTX, &SHA256_Init, &SHA256_Update, &SHA256_Final,
-              SHA256_CBLOCK, SHA256_DIGEST_LENGTH>(text, key);
+  unsigned char result[EVP_MAX_MD_SIZE];
+  unsigned int result_len = 0;
+  HMAC(EVP_sha256(), key.data(), key.size(), (const unsigned char*)text.data(),
+       text.size(), result, &result_len);
+  return std::string((char*)result, result_len);
 }
 
 void hexstring_from_data(const void* data, size_t len, char* output) {

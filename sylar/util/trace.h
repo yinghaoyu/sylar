@@ -1,13 +1,14 @@
 #ifndef __SYLAR_UTIL_TRACE_H__
 #define __SYLAR_UTIL_TRACE_H__
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
 
 namespace sylar {
 
-//时间微秒
+// 时间微秒
 class TimeCalc {
  public:
   TimeCalc();

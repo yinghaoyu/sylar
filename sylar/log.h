@@ -188,7 +188,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
 
  public:
   typedef std::shared_ptr<Logger> ptr;
-  typedef RWSpinlock RWMutexType;
+  typedef RWMutex RWMutexType;
 
   Logger(const std::string& name = "root");
   void log(LogLevel::Level level, LogEvent::ptr event);
@@ -268,7 +268,7 @@ class FileLogAppender : public LogAppender {
 
 class LoggerManager {
  public:
-  typedef RWSpinlock RWMutexType;
+  typedef RWMutex RWMutexType;
   LoggerManager();
   Logger::ptr getLogger(const std::string& name);
 

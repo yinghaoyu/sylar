@@ -4,8 +4,8 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 #include "sylar/iomanager.h"
 #include "sylar/singleton.h"
 
@@ -63,7 +63,7 @@ class Tracker : public std::enable_shared_from_this<Tracker> {
 
 class TrackerManager {
  public:
-  typedef sylar::RWSpinlock RWMutexType;
+  typedef sylar::RWMutex RWMutexType;
   TrackerManager();
   void addDim(uint32_t key, const std::string& name);
 

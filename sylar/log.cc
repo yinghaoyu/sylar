@@ -650,13 +650,13 @@ LoggerManager::LoggerManager() {
 }
 
 Logger::ptr LoggerManager::getLogger(const std::string& name) {
-  do {
+  {
     RWMutexType::ReadLock lock(m_mutex);
     auto it = m_loggers.find(name);
     if (it != m_loggers.end()) {
       return it->second;
     }
-  } while (0);
+  }
 
   RWMutexType::WriteLock lock(m_mutex);
   auto it = m_loggers.find(name);

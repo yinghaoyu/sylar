@@ -6,7 +6,7 @@
 #include "hpack.h"
 #include "sylar/http/http.h"
 #include "sylar/mutex.h"
-//#include "http2_stream.h"
+// #include "http2_stream.h"
 
 namespace sylar {
 namespace http2 {
@@ -96,7 +96,7 @@ class Stream {
 class StreamManager {
  public:
   typedef std::shared_ptr<StreamManager> ptr;
-  typedef sylar::RWSpinlock RWMutexType;
+  typedef sylar::RWMutex RWMutexType;
 
   Stream::ptr get(uint32_t id);
   void add(Stream::ptr stream);

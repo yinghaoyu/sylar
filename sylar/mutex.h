@@ -33,10 +33,7 @@ class Semaphore : Noncopyable {
 template <class T>
 struct ScopedLockImpl {
  public:
-  ScopedLockImpl(T& mutex) : m_mutex(mutex) {
-    m_mutex.lock();
-    m_locked = true;
-  }
+  ScopedLockImpl(T& mutex) : m_mutex(mutex) { lock(); }
 
   ~ScopedLockImpl() { unlock(); }
 
@@ -49,8 +46,8 @@ struct ScopedLockImpl {
 
   void unlock() {
     if (m_locked) {
-      m_mutex.unlock();
       m_locked = false;
+      m_mutex.unlock();
     }
   }
 
@@ -58,30 +55,27 @@ struct ScopedLockImpl {
   /// mutex
   T& m_mutex;
   /// 是否已上锁
-  bool m_locked;
+  bool m_locked = false;
 };
 
 template <class T>
 struct ReadScopedLockImpl {
  public:
-  ReadScopedLockImpl(T& mutex) : m_mutex(mutex) {
-    m_mutex.rdlock();
-    m_locked = true;
-  }
+  ReadScopedLockImpl(T& mutex) : m_mutex(mutex) { lock(); }
 
   ~ReadScopedLockImpl() { unlock(); }
 
   void lock() {
     if (!m_locked) {
-      m_mutex.rdlock();
       m_locked = true;
+      m_mutex.rdlock();
     }
   }
 
   void unlock() {
     if (m_locked) {
-      m_mutex.unlock();
       m_locked = false;
+      m_mutex.unlock();
     }
   }
 
@@ -89,16 +83,13 @@ struct ReadScopedLockImpl {
   /// mutex
   T& m_mutex;
   /// 是否已上锁
-  bool m_locked;
+  bool m_locked = false;
 };
 
 template <class T>
 struct WriteScopedLockImpl {
  public:
-  WriteScopedLockImpl(T& mutex) : m_mutex(mutex) {
-    m_mutex.wrlock();
-    m_locked = true;
-  }
+  WriteScopedLockImpl(T& mutex) : m_mutex(mutex) { lock(); }
 
   ~WriteScopedLockImpl() { unlock(); }
 
@@ -111,8 +102,8 @@ struct WriteScopedLockImpl {
 
   void unlock() {
     if (m_locked) {
-      m_mutex.unlock();
       m_locked = false;
+      m_mutex.unlock();
     }
   }
 
@@ -120,7 +111,7 @@ struct WriteScopedLockImpl {
   /// Mutex
   T& m_mutex;
   /// 是否已上锁
-  bool m_locked;
+  bool m_locked = false;
 };
 
 class Mutex : Noncopyable {

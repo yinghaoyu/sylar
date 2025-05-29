@@ -57,10 +57,10 @@ if(Protobuf_FOUND)
     include_directories(${Protobuf_INCLUDE_DIRS})
 endif()
 
-#find_package(hiredis-vip REQUIRED)
-#if(HIREDIS_VIP_FOUND)
+# find_package(hiredis-vip REQUIRED)
+# if(HIREDIS_VIP_FOUND)
 #  include_directories(${HIREDIS_VIP_INCLUDE_DIRS})
-#endif()
+# endif()
 
 set(LIB_SRC
     sylar/address.cc

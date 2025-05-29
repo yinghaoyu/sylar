@@ -114,7 +114,7 @@ class ILoadBalance {
 
 class LoadBalance : public ILoadBalance {
  public:
-  typedef sylar::RWSpinlock RWMutexType;
+  typedef sylar::RWMutex RWMutexType;
   typedef std::shared_ptr<LoadBalance> ptr;
   void add(LoadBalanceItem::ptr v);
   void del(LoadBalanceItem::ptr v);
@@ -205,7 +205,7 @@ class SDLoadBalance {
                                           ServiceItemInfo::ptr)>
       stream_callback;
 
-  typedef sylar::RWSpinlock RWMutexType;
+  typedef sylar::RWMutex RWMutexType;
 
   SDLoadBalance(IServiceDiscovery::ptr sd);
   virtual ~SDLoadBalance() {}

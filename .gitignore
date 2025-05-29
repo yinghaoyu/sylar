@@ -12,5 +12,6 @@
 *.data
 *.db
 *.roaring
+*.txt
 /.clangd/
 compile_commands.json

@@ -170,6 +170,25 @@ protobufmaker(tests/test.proto GRPC_SRC ${CMAKE_CURRENT_SOURCE_DIR})
 
 message(STATUS ${LIB_SRC})
 add_library(sylar SHARED ${LIB_SRC})
+target_link_libraries(sylar
+        dl
+        pthread
+        yaml-cpp
+        jsoncpp
+        tinyxml2
+        mysqlclient
+        zookeeper_mt
+        event
+        tbb
+        rdkafka++
+        #jemalloc
+        ${OPENSSL_LIBRARIES}
+        ${PROTOBUF_LIBRARIES}
+        ${ZLIB_LIBRARIES}
+        ${SQLite3_LIBRARIES}
+        #${HIREDIS_VIP_LIBRARIES}
+        hiredis_vip
+    )
 #add_library(sylar STATIC ${LIB_SRC})
 force_redefine_file_macro_for_sources(sylar)
 #add_library(sylar_static STATIC ${LIB_SRC})

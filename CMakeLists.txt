@@ -187,13 +187,12 @@ set(LIBS
         dl
         pthread
         yaml-cpp
-        jsoncpp_lib
+        jsoncpp
         tinyxml2
         mysqlclient
         zookeeper_mt
         event
         tbb
-        rdkafka
         rdkafka++
         #jemalloc
         ${OPENSSL_LIBRARIES}

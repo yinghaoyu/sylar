@@ -2,8 +2,8 @@
 #include "sylar/config.h"
 #include "sylar/endian.h"
 #include "sylar/log.h"
-#include "sylar/streams/zlib_stream.h"
 #include "sylar/macro.h"
+#include "sylar/streams/zlib_stream.h"
 
 namespace sylar {
 

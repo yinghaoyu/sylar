@@ -80,9 +80,7 @@ int64_t Socket::getSendTimeout() {
 }
 
 void Socket::setSendTimeout(int64_t v) {
-  struct timeval tv {
-    int(v / 1000), int(v % 1000 * 1000)
-  };
+  struct timeval tv{int(v / 1000), int(v % 1000 * 1000)};
   setOption(SOL_SOCKET, SO_SNDTIMEO, tv);
 }
 
@@ -95,9 +93,7 @@ int64_t Socket::getRecvTimeout() {
 }
 
 void Socket::setRecvTimeout(int64_t v) {
-  struct timeval tv {
-    int(v / 1000), int(v % 1000 * 1000)
-  };
+  struct timeval tv{int(v / 1000), int(v % 1000 * 1000)};
   setOption(SOL_SOCKET, SO_RCVTIMEO, tv);
 }
 

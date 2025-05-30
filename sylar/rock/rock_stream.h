@@ -39,7 +39,7 @@ class RockStream : public sylar::AsyncSocketStream {
       notify_handler;
 
   RockStream(Socket::ptr sock);
-  ~RockStream();
+  virtual ~RockStream();
 
   int32_t sendMessage(Message::ptr msg);
   RockResult::ptr request(RockRequest::ptr req, uint32_t timeout_ms);

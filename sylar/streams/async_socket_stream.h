@@ -18,6 +18,7 @@ class AsyncSocketStream
   typedef std::function<void(AsyncSocketStream::ptr)> disconnect_callback;
 
   AsyncSocketStream(Socket::ptr sock, bool owner = true);
+  virtual ~AsyncSocketStream() {}
 
   virtual bool start();
   virtual void close() override;

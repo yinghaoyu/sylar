@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <condition_variable>
 #include <fstream>
 #include <list>
 #include <map>
@@ -143,12 +144,12 @@ class LogFormatter {
                         LogLevel::Level level, LogEvent::ptr event) = 0;
   };
 
-  void init();
-
   bool isError() const { return m_error; }
   const std::string getPattern() const { return m_pattern; }
 
  private:
+  void compile();
+
   std::string m_pattern;
   std::vector<FormatItem::ptr> m_items;
   bool m_error = false;

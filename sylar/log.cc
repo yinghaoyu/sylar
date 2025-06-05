@@ -110,7 +110,7 @@ class LevelFormatItem : public LogFormatter::FormatItem {
   LevelFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << LogLevel::ToString(level);
+    os << std::right << std::setw(6) << LogLevel::ToString(level);
   }
 };
 
@@ -128,7 +128,7 @@ class NameFormatItem : public LogFormatter::FormatItem {
   NameFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << event->getLogger()->getName();
+    os << std::right << std::setw(6) << event->getLogger()->getName();
   }
 };
 
@@ -137,7 +137,7 @@ class ThreadIdFormatItem : public LogFormatter::FormatItem {
   ThreadIdFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << event->getThreadId();
+    os << std::right << std::setw(5) << event->getThreadId();
   }
 };
 
@@ -146,7 +146,7 @@ class FiberIdFormatItem : public LogFormatter::FormatItem {
   FiberIdFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << event->getFiberId();
+    os << std::right << std::setw(5) << event->getFiberId();
   }
 };
 
@@ -155,7 +155,7 @@ class ThreadNameFormatItem : public LogFormatter::FormatItem {
   ThreadNameFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << event->getThreadName();
+    os << std::right << std::setw(6) << event->getThreadName();
   }
 };
 
@@ -233,6 +233,16 @@ class TabFormatItem : public LogFormatter::FormatItem {
   std::string m_string;
 };
 
+class SpaceFormatItem : public LogFormatter::FormatItem {
+ public:
+  SpaceFormatItem(const std::string& str = "") {}
+
+  void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
+              LogEvent::ptr record) override {
+    os << " ";
+  }
+};
+
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
                    const char* file, int32_t line, uint32_t elapse,
                    uint32_t thread_id, uint32_t fiber_id, uint64_t time,
@@ -250,7 +260,7 @@ LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
 Logger::Logger(const std::string& name)
     : m_name(name), m_level(LogLevel::DEBUG) {
   m_formatter = std::make_shared<LogFormatter>(
-      "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n");
+      "%d{%Y-%m-%d %H:%M:%S}%b%t%b%N%b%F%b%p%b%c%b%f:%l%b%m%n");
 }
 
 void Logger::setFormatter(LogFormatter::ptr val) {
@@ -417,7 +427,21 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger,
                             LogLevel::Level level, LogEvent::ptr event) {
   if (level >= m_level) {
     MutexType::Lock lock(m_mutex);
+
+    // add color
+    if (level == LogLevel::WARN)
+      std::cout << "\x1B[93m";
+    if (level == LogLevel::ERROR)
+      std::cout << "\x1B[91m";
+    if (level == LogLevel::FATAL)
+      std::cout << "\x1B[97m\x1B[41m";
+
     m_formatter->format(std::cout, logger, level, event);
+
+    // clean color
+    if (level >= LogLevel::WARN) {
+      std::cout << "\x1B[0m\x1B[0K";
+    }
   }
 }
 
@@ -500,7 +524,7 @@ std::string LogserverAppender::toYamlString() {
 }
 
 LogFormatter::LogFormatter(const std::string& pattern) : m_pattern(pattern) {
-  init();
+  compile();
 }
 
 std::string LogFormatter::format(std::shared_ptr<Logger> logger,
@@ -521,83 +545,49 @@ std::ostream& LogFormatter::format(std::ostream& ofs,
   return ofs;
 }
 
-//%xxx %xxx{xxx} %%
-void LogFormatter::init() {
-  // str, format, type
-  std::vector<std::tuple<std::string, std::string, int>> vec;
-  std::string nstr;
-  for (size_t i = 0; i < m_pattern.size(); ++i) {
-    if (m_pattern[i] != '%') {
-      nstr.append(1, m_pattern[i]);
-      continue;
-    }
+enum STATUS {
+  UNIT,
+  STR,
+};
 
-    if ((i + 1) < m_pattern.size()) {
-      if (m_pattern[i + 1] == '%') {
-        nstr.append(1, '%');
-        continue;
-      }
-    }
+void LogFormatter::compile() {
+  size_t n = m_pattern.size();
 
-    size_t n = i + 1;
-    int fmt_status = 0;
-    size_t fmt_begin = 0;
+  STATUS status = STR;
 
-    std::string str;
-    std::string fmt;
-    while (n < m_pattern.size()) {
-      if (!fmt_status && (!isalpha(m_pattern[n]) && m_pattern[n] != '{' &&
-                          m_pattern[n] != '}')) {
-        str = m_pattern.substr(i + 1, n - i - 1);
+  std::string A;
+  std::string B;
+
+  std::vector<std::tuple<std::string, std::string, STATUS>> items;
+  // 状态机
+  for (size_t i = 0; i < n; ++i) {
+    switch (status) {
+      case STR: {
+        if (m_pattern[i] == '%') {
+          status = UNIT;
+        } else {
+          A = m_pattern[i];
+          items.emplace_back(std::make_tuple(std::move(A), std::move(B), STR));
+        }
+      } break;
+      case UNIT: {
+        A = m_pattern[i];
+        if (i + 1 < n && m_pattern[i + 1] == '{') {
+          size_t pos = m_pattern.find('}', i + 1);
+          if (pos != std::string::npos) {
+            B = m_pattern.substr(i + 2, pos - i - 2);
+            i = pos;
+          };
+        }
+        items.emplace_back(std::make_tuple(std::move(A), std::move(B), UNIT));
+        status = STR;
+      } break;
+      default:
+        m_error = true;
         break;
-      }
-      if (fmt_status == 0) {
-        if (m_pattern[n] == '{') {
-          str = m_pattern.substr(i + 1, n - i - 1);
-          // std::cout << "*" << str << std::endl;
-          fmt_status = 1;  // 解析格式
-          fmt_begin = n;
-          ++n;
-          continue;
-        }
-      } else if (fmt_status == 1) {
-        if (m_pattern[n] == '}') {
-          fmt = m_pattern.substr(fmt_begin + 1, n - fmt_begin - 1);
-          // std::cout << "#" << fmt << std::endl;
-          fmt_status = 0;
-          ++n;
-          break;
-        }
-      }
-      ++n;
-      if (n == m_pattern.size()) {
-        if (str.empty()) {
-          str = m_pattern.substr(i + 1);
-        }
-      }
-    }
-
-    if (fmt_status == 0) {
-      if (!nstr.empty()) {
-        vec.push_back(std::make_tuple(nstr, std::string(), 0));
-        nstr.clear();
-      }
-      vec.push_back(std::make_tuple(str, fmt, 1));
-      i = n - 1;
-    } else if (fmt_status == 1) {
-      std::cout << "pattern parse error: " << m_pattern << " - "
-                << m_pattern.substr(i) << std::endl;
-      m_error = true;
-      vec.push_back(std::make_tuple("<<pattern_error>>", fmt, 0));
     }
   }
 
-  if (!nstr.empty()) {
-    vec.push_back(std::make_tuple(nstr, "", 0));
-  }
-  static std::map<std::string,
-                  std::function<FormatItem::ptr(const std::string& str)>>
-      s_format_items = {
 #define XX(str, C)                                      \
   {                                                     \
     #str, [](const std::string& fmt) {                  \
@@ -605,6 +595,9 @@ void LogFormatter::init() {
     }                                                   \
   }
 
+  static std::map<std::string,
+                  std::function<FormatItem::ptr(const std::string& str)>>
+      s_format_units = {
           XX(m, MessageFormatItem),     // m:消息
           XX(p, LevelFormatItem),       // p:日志级别
           XX(r, ElapseFormatItem),      // r:累计毫秒数
@@ -615,29 +608,28 @@ void LogFormatter::init() {
           XX(f, FilenameFormatItem),    // f:文件名
           XX(l, LineFormatItem),        // l:行号
           XX(T, TabFormatItem),         // T:Tab
+          XX(b, SpaceFormatItem),       // b:空格
           XX(F, FiberIdFormatItem),     // F:协程id
           XX(N, ThreadNameFormatItem),  // N:线程名称
-#undef XX
       };
 
-  for (auto& i : vec) {
-    if (std::get<2>(i) == 0) {
-      m_items.push_back(std::make_shared<StringFormatItem>(std::get<0>(i)));
+#undef XX
+
+  for (auto& item : items) {
+    if (std::get<2>(item) == STR) {
+      m_items.emplace_back(
+          std::make_shared<StringFormatItem>(std::get<0>(item)));
     } else {
-      auto it = s_format_items.find(std::get<0>(i));
-      if (it == s_format_items.end()) {
-        m_items.push_back(std::make_shared<StringFormatItem>(
-            "<<error_format %" + std::get<0>(i) + ">>"));
+      auto it = s_format_units.find(std::get<0>(item));
+      if (it == s_format_units.end()) {
+        m_items.emplace_back(std::make_shared<StringFormatItem>(
+            "<error_format %" + std::get<0>(item) + ">"));
         m_error = true;
       } else {
-        m_items.push_back(it->second(std::get<1>(i)));
+        m_items.push_back(it->second(std::get<1>(item)));
       }
     }
-
-    // std::cout << "(" << std::get<0>(i) << ") - (" << std::get<1>(i) << ") -
-    // (" << std::get<2>(i) << ")" << std::endl;
   }
-  // std::cout << m_items.size() << std::endl;
 }
 
 LoggerManager::LoggerManager() {

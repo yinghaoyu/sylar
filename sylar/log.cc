@@ -110,7 +110,7 @@ class LevelFormatItem : public LogFormatter::FormatItem {
   LevelFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << std::right << std::setw(6) << LogLevel::ToString(level);
+    os << LogLevel::ToString(level);
   }
 };
 
@@ -128,7 +128,7 @@ class NameFormatItem : public LogFormatter::FormatItem {
   NameFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << std::right << std::setw(6) << event->getLogger()->getName();
+    os << event->getLogger()->getName();
   }
 };
 
@@ -137,7 +137,7 @@ class ThreadIdFormatItem : public LogFormatter::FormatItem {
   ThreadIdFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << std::right << std::setw(5) << event->getThreadId();
+    os << event->getThreadId();
   }
 };
 
@@ -146,7 +146,7 @@ class FiberIdFormatItem : public LogFormatter::FormatItem {
   FiberIdFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << std::right << std::setw(5) << event->getFiberId();
+    os << event->getFiberId();
   }
 };
 
@@ -155,27 +155,38 @@ class ThreadNameFormatItem : public LogFormatter::FormatItem {
   ThreadNameFormatItem(const std::string& str = "") {}
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    os << std::right << std::setw(6) << event->getThreadName();
+    os << event->getThreadName();
   }
 };
 
 class DateTimeFormatItem : public LogFormatter::FormatItem {
  public:
   DateTimeFormatItem(const std::string& format = "%Y-%m-%d %H:%M:%S")
-      : m_format(format) {
-    if (m_format.empty()) {
-      m_format = "%Y-%m-%d %H:%M:%S";
-    }
-  }
+      : m_format(format) {}
 
   void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level,
               LogEvent::ptr event) override {
-    struct tm tm;
-    time_t time = event->getTime();
-    localtime_r(&time, &tm);
-    char buf[64];
-    strftime(buf, sizeof(buf), m_format.c_str(), &tm);
-    os << buf;
+    static thread_local char buf[64];
+    static thread_local std::chrono::seconds last_sec_{};
+
+    std::chrono::system_clock::duration d = event->getTime().time_since_epoch();
+    std::chrono::seconds s =
+        std::chrono::duration_cast<std::chrono::seconds>(d);
+    auto usec =
+        std::chrono::duration_cast<std::chrono::microseconds>(d - s).count();
+    char usbuf[8];
+    snprintf(usbuf, sizeof(usbuf), ".%06ld", static_cast<long>(usec));
+    if (last_sec_ == s) {
+      os << buf << usbuf;
+      return;
+    }
+
+    last_sec_ = s;
+    auto time = std::chrono::system_clock::to_time_t(event->getTime());
+    struct tm ltm;
+    localtime_r(&time, &ltm);
+    strftime(buf, sizeof(buf), m_format.c_str(), &ltm);
+    os << buf << usbuf;
   }
 
  private:
@@ -244,8 +255,9 @@ class SpaceFormatItem : public LogFormatter::FormatItem {
 };
 
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
-                   const char* file, int32_t line, uint32_t elapse,
-                   uint32_t thread_id, uint32_t fiber_id, uint64_t time,
+                   const char* file, size_t line, size_t elapse,
+                   size_t thread_id, size_t fiber_id,
+                   std::chrono::system_clock::time_point time,
                    const std::string& thread_name)
     : m_file(file),
       m_line(line),
@@ -260,7 +272,7 @@ LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
 Logger::Logger(const std::string& name)
     : m_name(name), m_level(LogLevel::DEBUG) {
   m_formatter = std::make_shared<LogFormatter>(
-      "%d{%Y-%m-%d %H:%M:%S}%b%t%b%N%b%F%b%p%b%c%b%f:%l%b%m%n");
+      "%d{%Y-%m-%d %H:%M:%S}%b%t%b%N%b%F%b%p%b%c%b[%f:%l]%b%m%n");
 }
 
 void Logger::setFormatter(LogFormatter::ptr val) {
@@ -281,7 +293,6 @@ void Logger::setFormatter(const std::string& val) {
               << " invalid formatter" << std::endl;
     return;
   }
-  // m_formatter = new_val;
   setFormatter(new_val);
 }
 
@@ -386,13 +397,14 @@ FileLogAppender::FileLogAppender(const std::string& filename)
 void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                           LogEvent::ptr event) {
   if (level >= m_level) {
-    uint64_t now = event->getTime();
-    if (now >= (m_lastTime + 3)) {
+    auto now = event->getTime();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::seconds>(now - m_lastTime);
+    if (duration.count() >= 3) {
       reopen();
       m_lastTime = now;
     }
     MutexType::Lock lock(m_mutex);
-    // if(!(m_filestream << m_formatter->format(logger, level, event))) {
     if (!m_formatter->format(m_filestream, logger, level, event)) {
       std::cout << "error" << std::endl;
     }
@@ -427,21 +439,7 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger,
                             LogLevel::Level level, LogEvent::ptr event) {
   if (level >= m_level) {
     MutexType::Lock lock(m_mutex);
-
-    // add color
-    if (level == LogLevel::WARN)
-      std::cout << "\x1B[93m";
-    if (level == LogLevel::ERROR)
-      std::cout << "\x1B[91m";
-    if (level == LogLevel::FATAL)
-      std::cout << "\x1B[97m\x1B[41m";
-
     m_formatter->format(std::cout, logger, level, event);
-
-    // clean color
-    if (level >= LogLevel::WARN) {
-      std::cout << "\x1B[0m\x1B[0K";
-    }
   }
 }
 

@@ -19,7 +19,8 @@ namespace sylar {
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 pid_t GetThreadId() {
-  return syscall(SYS_gettid);
+  static thread_local pid_t tid = syscall(SYS_gettid);
+  return tid;
 }
 
 uint32_t GetFiberId() {

@@ -5,7 +5,7 @@ project(sylar)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include (cmake/utils.cmake)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+#set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O0 -fPIC -ggdb -std=c++11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-use-after-free")
 set(CMAKE_C_FLAGS "$ENV{CXXFLAGS} -rdynamic -O0 -fPIC -ggdb -std=c11 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-use-after-free")
 
@@ -222,7 +222,7 @@ set(LIBS
         hiredis_vip)
 
 if(${BUILD_TEST})
-    sylar_add_executable(test1 "tests/test.cc" sylar "${LIBS}")
+    sylar_add_executable(test_log "tests/test_log.cc" sylar "${LIBS}")
     sylar_add_executable(test_config "tests/test_config.cc" sylar "${LIBS}")
     sylar_add_executable(test_thread "tests/test_thread.cc" sylar "${LIBS}")
     sylar_add_executable(test_fiber "tests/test_fiber.cc" sylar "${LIBS}")

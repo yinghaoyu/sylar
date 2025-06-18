@@ -264,6 +264,7 @@ if(${BUILD_TEST})
     sylar_add_executable(test_bitmap "tests/test_bitmap.cc" sylar "${LIBS}")
     sylar_add_executable(test_zkclient "tests/test_zookeeper.cc" sylar "${LIBS}")
     sylar_add_executable(test_service_discovery "tests/test_service_discovery.cc" sylar "${LIBS}")
+    sylar_add_executable(test_mutex "tests/test_mutex.cc" sylar "${LIBS}")
 
     sylar_add_executable(test_util "tests/test_util.cc" sylar "${LIBS}")
     sylar_add_executable(test_hashmultimap "tests/test_hashmultimap.cc" sylar "${LIBS}")
